@@ -2,6 +2,8 @@ import sys
 import json
 from PyQt5 import QtCore, QtGui, QtWidgets, uic
 from . import digitalDisplay as dsp
+from . import curvePlot as cplt
+from . import newWell as nw
 
 
 qt_creator_file = "./resources/mainMenu.ui"
@@ -12,6 +14,10 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         QtWidgets.QMainWindow.__init__(self)
         Ui_MainWindow.__init__(self)
         self.setupUi(self)
+
+        self.actionPlot.setEnabled(True)
+        self.actionPlot.triggered.connect(self.curve_plot)
+        self.actionNew.triggered.connect(self.new_well)
 
         self.actionDepth.triggered.connect(self.depth_window)
         self.actionSpeed.triggered.connect(self.speed_window)
@@ -29,3 +35,10 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         widget = dsp.DigitalDisplay(title='Speed')
         widget.exec_()
 
+    def curve_plot(self):
+        widget = cplt.CurvePlot()
+        widget.exec_()
+
+    def new_well(self):
+        widget = nw.NewWell()
+        widget.exec_()
