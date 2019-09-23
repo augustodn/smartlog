@@ -41,7 +41,7 @@ class NewWell(QDialog, Ui_NewWell):
         print(self.model.well.values()) # DEBUG
 
         # Store well data
-        error = self.model.insert_inDB()
+        error = self.model.write_toDB()
         if error:
             msg = QMessageBox()
             msg.setIcon(QMessageBox.Warning)

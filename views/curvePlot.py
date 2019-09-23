@@ -11,7 +11,8 @@ DEPTH_SCALE = 98.0
 TENSION_SCALE = 19.53125
 CCL_FACTOR = 51.1
 CCL_OFFSET = 0   # -511
-DB_PATH = '/home/augusto/dev/arduino/winchPanel/winchdata.sql'
+DB_PATH = '/home/augusto/dev/arduino/winchpanel/winchdata.sql'
+TABLE = 'acq_20190908_205858'
 Ui_CurvePlot, QtBaseClass = uic.loadUiType("./resources/curvePlot.ui")
 
 class CurvePlot(QDialog, Ui_CurvePlot):
@@ -81,9 +82,9 @@ class MyDynamicMplCanvas(MyMplCanvas):
         timer.start(100)
         """
     def update_figure(self):
-        result = self.cur.execute("SELECT * FROM acq_20190913_110752\
+        result = self.cur.execute("SELECT * FROM {}\
                          where id_seq > {} and id_seq < {}"
-                         .format(self.iter*100, (self.iter+1)*100))\
+                         .format(TABLE, self.iter*100, (self.iter+1)*100))\
                          .fetchall()
         """
         # Use something like this for realtime plotting
