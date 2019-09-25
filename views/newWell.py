@@ -1,27 +1,31 @@
-from PyQt5 import uic, QtCore
+from PyQt5 import uic
 from PyQt5.QtWidgets import QSizePolicy, QDialog, QMessageBox
+from PyQt5.QtCore import pyqtSignal, QDate
 from datetime import datetime
-from model.main import WellModel
+import model.main as model
+
+DB_PATH = './data/'
 
 Ui_NewWell, QtBaseClass = uic.loadUiType("./resources/newWell.ui")
 
 class NewWell(QDialog, Ui_NewWell):
+    sessionChanged = pyqtSignal(model.Session)
+
     def __init__(self, parent=None):
         super(NewWell, self).__init__(parent)
         Ui_NewWell.__init__(self)
         self.setupUi(self)
         # controller handling
-        today = QtCore.QDate(datetime.today())
+        today = QDate(datetime.today())
         self.dateEdit.setDate(today)
+        self.session = model.Session()
         # connections
         self.okButton.clicked.connect(self.store_data)
         self.cancelButton.clicked.connect(self.close)
 
-        self.show()
-
     def store_data(self):
         # Pass data from view to model
-        self.model = WellModel()
+        self.model = model.Well()
         self.model.well['name'] = self.nameEdit.text()
         self.model.well['field'] = self.fieldEdit.text()
         self.model.well['area'] =  self.areaEdit.text()
@@ -38,6 +42,14 @@ class NewWell(QDialog, Ui_NewWell):
         self.model.well['inDate'] = datetime.today().\
                                         strftime("%Y-%m-%d %H:%M:%S")
 
+        self.session.active['well'] = self.model.well['name']
+        self.session.active['run'] = 1
+        self.session.active['DBpath'] = "{}{}.db".format(
+                                            DB_PATH,
+                                            self.model.well['field'])
+        passTable = model.Pass().\
+                create_table(self.session.active['DBpath'])
+        self.session.active['pass'] = passTable
         print(self.model.well.values()) # DEBUG
 
         # Store well data
@@ -49,4 +61,5 @@ class NewWell(QDialog, Ui_NewWell):
             msg.setText(error)
             msg.exec_()
         else:
+            self.sessionChanged.emit(self.session)
             self.close()

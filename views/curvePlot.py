@@ -6,13 +6,12 @@ from matplotlib.figure import Figure
 import matplotlib.ticker as ticker
 import numpy as np
 import sqlite3
+import model.main as model
 
 DEPTH_SCALE = 98.0
 TENSION_SCALE = 19.53125
 CCL_FACTOR = 51.1
 CCL_OFFSET = 0   # -511
-DB_PATH = '/home/augusto/dev/arduino/winchpanel/winchdata.sql'
-TABLE = 'acq_20190908_205858'
 Ui_CurvePlot, QtBaseClass = uic.loadUiType("./resources/curvePlot.ui")
 
 class CurvePlot(QDialog, Ui_CurvePlot):
@@ -20,19 +19,22 @@ class CurvePlot(QDialog, Ui_CurvePlot):
         super(CurvePlot, self).__init__(parent)
         Ui_CurvePlot.__init__(self)
         self.setupUi(self)
+        self.session = model.Session()
         # DEBUG: print (self.__dict__) # To check widget attributes
         layout = QVBoxLayout(self.mainWidget)
         self.canvas = MyDynamicMplCanvas(
                             self.mainWidget,
                             width=11.50, height=6.80,
-                            dpi=100)
+                            dpi=100, DB_PATH = self.session.active['DBpath'] ,
+                            TABLE = self.session.active['pass'])
         layout.addWidget(self.canvas)
         self.mainWidget.setFocus()
 
         self.vScrollBar.valueChanged.connect(self.update_depth)
-        self.show()
 
     def update_depth(self):
+        self.canvas.DB_PATH = self.session.active['DBpath']
+        self.canvas.TABLE = self.session.active['pass']
         self.canvas.iter = self.vScrollBar.value()
         self.canvas.update_figure()
 
@@ -47,14 +49,16 @@ class CurvePlot(QDialog, Ui_CurvePlot):
 class MyMplCanvas(FigureCanvas):
     """Ultimately, this is a QWidget (as well as a FigureCanvasAgg, etc.)."""
 
-    def __init__(self, parent=None, width=4, height=5, dpi=100):
+    def __init__(self, parent=None, width=4, height=5, dpi=100, DB_PATH="",
+                 TABLE= ""):
         self.fig, self.axis = plt.subplots(
                                 1, 2, # 1 row, 2 cols
                                 gridspec_kw={'width_ratios':[1, 2]},
                                 sharey=True,
                                 figsize=(width, height)
                               )
-
+        self.DB_PATH = DB_PATH
+        self.TABLE = TABLE
         FigureCanvas.__init__(self, self.fig)
         self.setParent(parent)
         FigureCanvas.setSizePolicy(self,
@@ -68,13 +72,8 @@ class MyDynamicMplCanvas(MyMplCanvas):
 
     def __init__(self, *args, **kwargs):
         MyMplCanvas.__init__(self, *args, **kwargs)
-
-        self.conn = sqlite3.connect(DB_PATH)
-        self.cur = self.conn.cursor()
-        #style.use('fivethirtyeight')
-
         self.iter = 0
-        self.update_figure()
+        # TODO: Implement real time plotting, try with a session variable
         """
         # Use this for realtime plotting
         timer = QtCore.QTimer(self)
@@ -82,10 +81,13 @@ class MyDynamicMplCanvas(MyMplCanvas):
         timer.start(100)
         """
     def update_figure(self):
-        result = self.cur.execute("SELECT * FROM {}\
-                         where id_seq > {} and id_seq < {}"
-                         .format(TABLE, self.iter*100, (self.iter+1)*100))\
-                         .fetchall()
+        self.conn = sqlite3.connect(self.DB_PATH)
+        self.cur = self.conn.cursor()
+        result = self.cur.execute("SELECT * FROM {} where id_seq > {} and \
+                                  id_seq < {}".format(self.TABLE,
+                                                      self.iter*100,
+                                                      (self.iter+1)*100)).fetchall()
+        self.conn.close()
         """
         # Use something like this for realtime plotting
         result = cur.execute("SELECT * FROM acq_20190917_134352 \
