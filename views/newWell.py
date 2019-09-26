@@ -50,8 +50,9 @@ class NewWell(QDialog, Ui_NewWell):
         passTable = model.Pass().\
                 create_table(self.session.active['DBpath'])
         self.session.active['pass'] = passTable
+        WellRunTable().create_table(self.session)
         print(self.model.well.values()) # DEBUG
-
+        
         # Store well data
         error = self.model.write_toDB()
         if error:

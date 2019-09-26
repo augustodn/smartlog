@@ -57,7 +57,7 @@ class Well(QStandardItemModel):
                         """ witness text, date numeric, service text,"""
                         """ comments text, footNote text,"""
                         """ inDate numeric)""")
-            con.execute("INSERT INTO well{} VALUES {}".format(cols, data))
+            con.execute("INSERT INTO well {} VALUES {}".format(cols, data))
             con.commit()
             con.close()
             return ""
@@ -87,8 +87,30 @@ class Pass:
 
     def create_table(self, database):
         con = sqlite3.connect(database)
-        table_name = datetime.today().strftime("acq_%Y%m%d_%H%M%S")
-        con.execute("""CREATE TABLE {} (id_seq int, depth int,"""
+        table_name = datetime.today().strftime("pass_%Y%m%d_%H%M%S")
+        con.execute("""CREATE TABLE {} (id_seq int, depth int, """
                     """ccl int, tension int)""".format(table_name))
         con.close()
-        return(table_name)
+        return table_name
+
+class WellRunTable:
+    
+    def __init__(self):
+        pass
+
+    def create_table(self, session):
+        con = sqlite3.connect(session.active['DBpath'])
+        idWell = con.execute("""SELECT rowid from well where """
+                             """name = '{}'""".\
+                             format(session.active['well'])).\
+                             fetchone()[0]
+        
+        con.execute("""CREATE TABLE well_run_pass(id_well integer,"""
+                    """ run integer, id_pass text)""")
+       
+        con.execute("""INSERT INTO well_run_pass (id_well, """
+                    """run, id_pass) values ({},{},'{}')""".\
+                    format(idWell, session.active['run'], 
+                           session.active['pass']))
+        con.commit()
+        con.close()
