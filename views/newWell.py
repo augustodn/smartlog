@@ -50,17 +50,25 @@ class NewWell(QDialog, Ui_NewWell):
         passTable = model.Pass().\
                 create_table(self.session.active['DBpath'])
         self.session.active['pass'] = passTable
-        WellRunTable().create_table(self.session)
+        self.session.active['mode'] = 'realtime'
+
         print(self.model.well.values()) # DEBUG
-        
-        # Store well data
-        error = self.model.write_toDB()
+
+        # Store well data, emit session parameters and link well_run_pass table
+        error = self.model.write()
         if error:
-            msg = QMessageBox()
-            msg.setIcon(QMessageBox.Warning)
-            msg.setWindowTitle("DB connection Failed")
-            msg.setText(error)
-            msg.exec_()
+            self.dialog_critical(error)
         else:
             self.sessionChanged.emit(self.session)
+
+        error  = model.WellRunTable().write(self.session)
+        if error:
+            self.dialog_critical(error)
+        else:
             self.close()
+
+    def dialog_critical(self, s):
+        dlg = QMessageBox(self)
+        dlg.setText(s)
+        dlg.setIcon(QMessageBox.Critical)
+        dlg.show()

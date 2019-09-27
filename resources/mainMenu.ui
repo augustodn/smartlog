@@ -27,7 +27,15 @@
     <property name="title">
      <string>Log</string>
     </property>
-    <addaction name="actionNew"/>
+    <widget class="QMenu" name="menuNew">
+     <property name="title">
+      <string>New</string>
+     </property>
+     <addaction name="actionWell"/>
+     <addaction name="actionRun"/>
+     <addaction name="actionPass"/>
+    </widget>
+    <addaction name="menuNew"/>
     <addaction name="actionLoad"/>
     <addaction name="separator"/>
     <addaction name="actionExit"/>
@@ -36,7 +44,14 @@
     <property name="title">
      <string>Edit</string>
     </property>
-    <addaction name="actionConnect"/>
+    <widget class="QMenu" name="menuConnect">
+     <property name="title">
+      <string>Connect</string>
+     </property>
+     <addaction name="actionStart"/>
+     <addaction name="actionStop"/>
+    </widget>
+    <addaction name="menuConnect"/>
     <addaction name="separator"/>
     <addaction name="actionSettings"/>
    </widget>
@@ -86,11 +101,6 @@
     <string>Speed</string>
    </property>
   </action>
-  <action name="actionConnect">
-   <property name="text">
-    <string>Connect</string>
-   </property>
-  </action>
   <action name="actionSettings">
    <property name="text">
     <string>Settings</string>
@@ -106,14 +116,34 @@
     <string>Load</string>
    </property>
   </action>
-  <action name="actionNew">
-   <property name="text">
-    <string>New</string>
-   </property>
-  </action>
   <action name="actionAbout">
    <property name="text">
     <string>About</string>
+   </property>
+  </action>
+  <action name="actionWell">
+   <property name="text">
+    <string>Well</string>
+   </property>
+  </action>
+  <action name="actionRun">
+   <property name="text">
+    <string>Run</string>
+   </property>
+  </action>
+  <action name="actionPass">
+   <property name="text">
+    <string>Pass</string>
+   </property>
+  </action>
+  <action name="actionStart">
+   <property name="text">
+    <string>Start</string>
+   </property>
+  </action>
+  <action name="actionStop">
+   <property name="text">
+    <string>Stop</string>
    </property>
   </action>
  </widget>

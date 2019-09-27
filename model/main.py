@@ -25,7 +25,7 @@ class Well(QStandardItemModel):
             'footNote': '',
             'inDate': ''}
 
-    def write_toDB(self):
+    def write(self):
         cols = tuple(self.well.keys())
         data = tuple(self.well.values())
         # TODO: Warn if database exists, although a new entry in well
@@ -79,6 +79,7 @@ class Session:
                 'run': "",
                 'pass': "",
                 'DBpath': "",
+                'mode': ""
             }
 
 class Pass:
@@ -94,23 +95,39 @@ class Pass:
         return table_name
 
 class WellRunTable:
-    
+
     def __init__(self):
         pass
 
-    def create_table(self, session):
+    def write(self, session):
         con = sqlite3.connect(session.active['DBpath'])
         idWell = con.execute("""SELECT rowid from well where """
                              """name = '{}'""".\
                              format(session.active['well'])).\
                              fetchone()[0]
-        
-        con.execute("""CREATE TABLE well_run_pass(id_well integer,"""
-                    """ run integer, id_pass text)""")
-       
-        con.execute("""INSERT INTO well_run_pass (id_well, """
-                    """run, id_pass) values ({},{},'{}')""".\
-                    format(idWell, session.active['run'], 
-                           session.active['pass']))
-        con.commit()
-        con.close()
+        try:
+            con.execute("""INSERT INTO well_run_pass (id_well, """
+                        """run, id_pass) values ({},{},'{}')""".\
+                        format(idWell, session.active['run'],
+                               session.active['pass']))
+            con.commit()
+            con.close()
+            return ""
+        except:
+            pass
+
+        # try to create table if can't insert data into table
+        try:
+            con.execute("""CREATE TABLE well_run_pass(id_well integer, """
+                        """run integer, id_pass text, foreign key(id_well) """
+                        """references well(rowid))""")
+
+            con.execute("""INSERT INTO well_run_pass (id_well, """
+                        """run, id_pass) values ({},{},'{}')""".\
+                        format(idWell, session.active['run'],
+                               session.active['pass']))
+            con.commit()
+            con.close()
+            return
+        except Exception as e:
+            return str(e)

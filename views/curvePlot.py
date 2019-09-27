@@ -26,7 +26,8 @@ class CurvePlot(QDialog, Ui_CurvePlot):
                             self.mainWidget,
                             width=11.50, height=6.80,
                             dpi=100, DB_PATH = self.session.active['DBpath'] ,
-                            TABLE = self.session.active['pass'])
+                            TABLE = self.session.active['pass'],
+                            mode = self.session.active['mode'])
         layout.addWidget(self.canvas)
         self.mainWidget.setFocus()
 
@@ -35,6 +36,7 @@ class CurvePlot(QDialog, Ui_CurvePlot):
     def update_depth(self):
         self.canvas.DB_PATH = self.session.active['DBpath']
         self.canvas.TABLE = self.session.active['pass']
+        self.canvas.mode = self.session.active['mode']
         self.canvas.iter = self.vScrollBar.value()
         self.canvas.update_figure()
 
@@ -49,8 +51,8 @@ class CurvePlot(QDialog, Ui_CurvePlot):
 class MyMplCanvas(FigureCanvas):
     """Ultimately, this is a QWidget (as well as a FigureCanvasAgg, etc.)."""
 
-    def __init__(self, parent=None, width=4, height=5, dpi=100, DB_PATH="",
-                 TABLE= ""):
+    def __init__(self, parent=None, width=4, height=5, dpi=100, DB_PATH='',
+                 TABLE= '', mode=''):
         self.fig, self.axis = plt.subplots(
                                 1, 2, # 1 row, 2 cols
                                 gridspec_kw={'width_ratios':[1, 2]},
@@ -59,6 +61,7 @@ class MyMplCanvas(FigureCanvas):
                               )
         self.DB_PATH = DB_PATH
         self.TABLE = TABLE
+        self.mode = mode
         FigureCanvas.__init__(self, self.fig)
         self.setParent(parent)
         FigureCanvas.setSizePolicy(self,
@@ -73,27 +76,33 @@ class MyDynamicMplCanvas(MyMplCanvas):
     def __init__(self, *args, **kwargs):
         MyMplCanvas.__init__(self, *args, **kwargs)
         self.iter = 0
-        # TODO: Implement real time plotting, try with a session variable
-        """
-        # Use this for realtime plotting
-        timer = QtCore.QTimer(self)
-        timer.timeout.connect(self.update_figure)
-        timer.start(100)
-        """
+
+        if self.mode == 'realtime':
+            timer = QtCore.QTimer(self)
+            timer.timeout.connect(self.update_figure)
+            timer.start(100)
+
     def update_figure(self):
-        self.conn = sqlite3.connect(self.DB_PATH)
-        self.cur = self.conn.cursor()
-        result = self.cur.execute("SELECT * FROM {} where id_seq > {} and \
-                                  id_seq < {}".format(self.TABLE,
-                                                      self.iter*100,
-                                                      (self.iter+1)*100)).fetchall()
-        self.conn.close()
-        """
+        con = sqlite3.connect(self.DB_PATH)
+        cur = con.cursor()
+        if self.mode == 'database':
+            result = cur.execute("""SELECT * FROM {} where id_seq > {}"""
+                                      """ and id_seq < {}"""
+                                      .format(self.TABLE,
+                                              self.iter*100,
+                                              (self.iter+1)*100)).fetchall()
+        elif self.mode == 'realtime':
         # Use something like this for realtime plotting
-        result = cur.execute("SELECT * FROM acq_20190917_134352 \
-                             order by id_seq desc limit 100"
-                             .format(i*100, (i+1)*100)).fetchall()
-        """
+            result = cur.execute("""SELECT * FROM {} order by """
+                                 """id_seq desc limit 100"""
+                                 .format(self.TABLE)).fetchall()
+
+        else:
+            # Generate an error if self.mode options are not these ones
+            pass
+
+        con.close()
+
         y = np.array([var[1] for var in result]) / DEPTH_SCALE
         x1 = (np.array([var[2] for var in result]) + CCL_OFFSET) \
                 / CCL_FACTOR

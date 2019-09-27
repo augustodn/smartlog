@@ -1,7 +1,8 @@
 from PyQt5 import uic
 from PyQt5.QtGui import QStandardItemModel, QStandardItem
 from PyQt5.QtWidgets import QDialog, QApplication, QFileDialog, QMessageBox
-from PyQt5.QtCore import QItemSelection, pyqtSlot, Qt, pyqtSignal, QObject
+from PyQt5.QtCore import (QItemSelection, pyqtSlot, Qt, pyqtSignal, QObject,
+                         QModelIndex)
 import sqlite3
 import model.main as model
 
@@ -15,7 +16,7 @@ class LoadPass(QDialog, QObject, Ui_LoadPass):
         super(LoadPass, self).__init__(parent)
         Ui_LoadPass.__init__(self)
         self.setupUi(self)
-        self.selectedText = ""
+        # self.selectedText = ""
         self.session = model.Session()
 
         self.standardModel = QStandardItemModel()
@@ -45,10 +46,12 @@ class LoadPass(QDialog, QObject, Ui_LoadPass):
         dlg.show()
 
     def select_pass(self):
-        #print(self.selectedText)
         try:
             self.session.active['pass'] = self.selectedText
             self.session.active['DBpath'] = self.path
+            self.session.active['run'] = int(self.itemParents[0][-1:])
+            self.session.active['well'] = self.itemParents[1]
+            self.session.active['mode'] = 'database'
         except Exception as e:
             self.dialog_critical(str(e))
             return -1
@@ -66,17 +69,13 @@ class LoadPass(QDialog, QObject, Ui_LoadPass):
 
         # TODO: Use this to find out which well and pass (in case we want a new
         # pass over the same well/pass
-        """
         #find out the hierarchy level of the selected item
-        hierarchyLevel=1
         seekRoot = index
-        invalid = QtCore.QModelIndex()
+        invalid = QModelIndex()
+        self.itemParents = []
         while seekRoot.parent() != invalid:
             seekRoot = seekRoot.parent()
-            hierarchyLevel += 1
-        showString = '{}, Level {}'.format(selectedText,hierarchyLevel)
-        self.setWindowTitle(showString)
-        """
+            self.itemParents.append(seekRoot.data(Qt.DisplayRole))
 
     def make_tree(self):
         """ Algorithm to generate tree structure based on db structure.
@@ -105,7 +104,7 @@ class LoadPass(QDialog, QObject, Ui_LoadPass):
         level[0] = list(set(level[0]))
         # print(level)
         # print(rows)
-
+        # TODO: Clean structure before starting to append
         root_item = [QStandardItem(item) for item in level[0]]
 
         [self.rootNode.appendRow(item) for item in root_item]
