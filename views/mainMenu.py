@@ -1,5 +1,5 @@
-from PyQt5 import QtCore, uic
-from PyQt5.QWidgets import QMainWindow, qApp, QMessageBox
+from PyQt5 import uic
+from PyQt5.QtWidgets import QMainWindow, qApp, QMessageBox
 from PyQt5.QtCore import QTimer
 from . import (digitalDisplay as dsp, curvePlot as cplt, newWell as nw,
                loadPass as lp)
@@ -31,7 +31,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.actionWell.triggered.connect(self.new_well)
         self.actionLoad.triggered.connect(self.load_pass)
 
-        self.actionStart.triggered.connect(self.read_data)
+        self.actionStart.triggered.connect(self.open_con)
         self.actionStop.triggered.connect(self.close_con)
 
         self.actionPlot.triggered.connect(self.curve_plot)
@@ -67,7 +67,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         # self.loadPass.exec_()
 
     def update_session(self, session):
-        """ Read session object as argument coming from emit signal. 
+        """ Read session object as argument coming from emit signal.
         Update session on Main Window """
 
         self.session = session

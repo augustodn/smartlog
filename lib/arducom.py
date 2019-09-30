@@ -18,9 +18,13 @@ class Serial:
         self.port = port
         self.speed = speed
         self.timeout = timeout
-        self.ser = serial.Serial(self.port,
-                                 self.speed,
-                                 timeout = self.timeout)
+        try:
+            self.ser = serial.Serial(self.port,
+                                     self.speed,
+                                     timeout = self.timeout)
+        except:
+            print("[ERROR] Couldn't open serial port")
+            return False
         # Wait until connection opens. Arduino restarts
         # when the connection is opened.
         time.sleep(3)
@@ -34,10 +38,10 @@ class Serial:
 
         if self.ser.read(3) == self.ARDU_CONFIRM:
             print("[INFO] Serial connection established")
-            return(True)
+            return True
         else:
             print("[ERROR] Initialization not verified")
-            return(False)
+            return False
 
 
 
