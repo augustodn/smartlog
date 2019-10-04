@@ -14,7 +14,7 @@ class Serial:
         self.id_seq_old = -1
 
 
-    def start_acq(self, port, speed, timeout):
+    def open(self, port, speed, timeout):
         self.port = port
         self.speed = speed
         self.timeout = timeout
@@ -27,10 +27,15 @@ class Serial:
             return False
         # Wait until connection opens. Arduino restarts
         # when the connection is opened.
+        print("[INFO] Serial port opened")
+        return True
+
+    def start(self):
         time.sleep(3)
+        self.ser.reset_input_buffer()
         self.ser.write(self.STR_STRING.encode())
         self.retry = 0
-        # Whait in a loop until the response 
+        # Wait in a loop until the response
         # reaches the buffer
         while(self.ser.inWaiting() < 3 and self.retry < 5):
             time.sleep(.1)
@@ -43,15 +48,12 @@ class Serial:
             print("[ERROR] Initialization not verified")
             return False
 
-
-
-    def get_data(self, id_seq_acum, sleep):
+    def get_data(self, id_seq_acum):
 
         self.id_seq_acum = id_seq_acum
         # Send command to arduino
         print("[CMD] Give me data")
         self.ser.write(self.DTA_STRING.encode())
-        time.sleep(sleep)
         self.inbuf = self.ser.inWaiting()
         if (self.inbuf):
             print("[INFO] Reading buffer")
@@ -130,7 +132,7 @@ class DB:
                             format(table_name))
         return(table_name)
 
-    def write_toDB(self, data, table):
+    def write(self, data, table):
         self.db_cur.executemany('INSERT INTO {} VALUES (?,?,?,?)'.
                                 format(table), data)
 

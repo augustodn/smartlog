@@ -63,13 +63,11 @@ class LoadPass(QDialog, QObject, Ui_LoadPass):
     #decorator has same signature as the signal
     @pyqtSlot(QItemSelection, QItemSelection)
     def selectionChangedSlot(self,newSelection,oldSelection):
-        #get the text of the selected item
+        # Get the text of the selected item
         index = self.treeView.selectionModel().currentIndex()
         self.selectedText = index.data(Qt.DisplayRole)
 
-        # TODO: Use this to find out which well and pass (in case we want a new
-        # pass over the same well/pass
-        #find out the hierarchy level of the selected item
+        # Trace hierarchy
         seekRoot = index
         invalid = QModelIndex()
         self.itemParents = []
@@ -80,6 +78,11 @@ class LoadPass(QDialog, QObject, Ui_LoadPass):
     def make_tree(self):
         """ Algorithm to generate tree structure based on db structure.
         Data read from well_run_pass table which relates every object """
+
+        rows = self.rootNode.rowCount()
+        if rows > 0:
+            self.rootNode.removeRows(0, rows)
+
         # TODO: Improve algorithm
         try:
             con = sqlite3.connect(self.path)
@@ -105,8 +108,8 @@ class LoadPass(QDialog, QObject, Ui_LoadPass):
         # print(level)
         # print(rows)
         # TODO: Clean structure before starting to append
-        root_item = [QStandardItem(item) for item in level[0]]
 
+        root_item = [QStandardItem(item) for item in level[0]]
         [self.rootNode.appendRow(item) for item in root_item]
 
         level_1 = []

@@ -1,5 +1,7 @@
-from PyQt5 import uic, QtCore
-from PyQt5.QtWidgets import QVBoxLayout, QSizePolicy, QDialog, QMenuBar, QMenu
+from PyQt5 import uic
+from PyQt5.QtWidgets import (QVBoxLayout, QSizePolicy, QDialog, QMenuBar, QMenu,
+                             QMessageBox)
+from PyQt5.QtCore import pyqtSignal
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
@@ -7,6 +9,7 @@ import matplotlib.ticker as ticker
 import numpy as np
 import sqlite3
 import model.main as model
+import time
 
 DEPTH_SCALE = 98.0
 TENSION_SCALE = 19.53125
@@ -15,6 +18,7 @@ CCL_OFFSET = 0   # -511
 Ui_CurvePlot, QtBaseClass = uic.loadUiType("./resources/curvePlot.ui")
 
 class CurvePlot(QDialog, Ui_CurvePlot):
+
     def __init__(self, parent=None):
         super(CurvePlot, self).__init__(parent)
         Ui_CurvePlot.__init__(self)
@@ -25,12 +29,14 @@ class CurvePlot(QDialog, Ui_CurvePlot):
         self.canvas = MyDynamicMplCanvas(
                             self.mainWidget,
                             width=11.50, height=6.80,
-                            dpi=100, DB_PATH = self.session.active['DBpath'] ,
+                            dpi=100,
+                            DB_PATH = self.session.active['DBpath'] ,
                             TABLE = self.session.active['pass'],
                             mode = self.session.active['mode'])
         layout.addWidget(self.canvas)
         self.mainWidget.setFocus()
 
+        # Connections
         self.vScrollBar.valueChanged.connect(self.update_depth)
 
     def update_depth(self):
@@ -46,6 +52,24 @@ class CurvePlot(QDialog, Ui_CurvePlot):
         if newvScrollBarVal < 0:
             newvScrollBarVal = 0
         self.vScrollBar.setValue(newvScrollBarVal)
+
+    def set_scroll_interval(self, lastItem=None):
+        pageStep = 1
+        wasAtMax = (self.vScrollBar.value() == \
+                   (self.vScrollBar.maximum() - 2*pageStep))
+        if not lastItem:  # database mode
+            con = sqlite3.connect(self.session.active['DBpath'])
+            lastItem = con.execute("SELECT COUNT(*) FROM {}"\
+                       .format(self.session.active['pass'])).fetchall()[0][0]
+            con.close()
+        lastItem = lastItem - pageStep
+        self.vScrollBar.setMinimum(0)
+        # Division by 100 depends on the DB query interval. Related to zoom
+        self.vScrollBar.setMaximum(int(lastItem/100))
+        self.vScrollBar.setPageStep(pageStep)
+        if self.session.active['mode'] == 'realtime' and wasAtMax:
+            # TODO: This is only in case we're logging down
+            self.vScrollBar.setValue(int(lastItem/100) - 2*pageStep)
 
 
 class MyMplCanvas(FigureCanvas):
@@ -72,72 +96,70 @@ class MyMplCanvas(FigureCanvas):
 
 class MyDynamicMplCanvas(MyMplCanvas):
     """A canvas that updates itself every 300 msecs with a new plot."""
+    speednDepthChanged = pyqtSignal(list)
 
     def __init__(self, *args, **kwargs):
         MyMplCanvas.__init__(self, *args, **kwargs)
         self.iter = 0
+        self.axis_xmin = [-10, 0]
+        self.axis_xmax = [10, 20000]
 
-        if self.mode == 'realtime':
-            timer = QtCore.QTimer(self)
-            timer.timeout.connect(self.update_figure)
-            timer.start(100)
 
     def update_figure(self):
-        con = sqlite3.connect(self.DB_PATH)
-        cur = con.cursor()
-        if self.mode == 'database':
-            result = cur.execute("""SELECT * FROM {} where id_seq > {}"""
-                                      """ and id_seq < {}"""
-                                      .format(self.TABLE,
-                                              self.iter*100,
-                                              (self.iter+1)*100)).fetchall()
-        elif self.mode == 'realtime':
-        # Use something like this for realtime plotting
-            result = cur.execute("""SELECT * FROM {} order by """
-                                 """id_seq desc limit 100"""
-                                 .format(self.TABLE)).fetchall()
+        try:
+            con = sqlite3.connect(self.DB_PATH)
+            cur = con.cursor()
+            self.result = cur.execute(
+                          "SELECT * FROM {} where id_seq > {} and id_seq < {}"\
+                          .format(self.TABLE, self.iter*100, (self.iter+1)*100)
+                          ).fetchall()
+
+        except Exception as e:
+            self.dialog_critical(str(e))
+            return -1
 
         else:
-            # Generate an error if self.mode options are not these ones
-            pass
+            con.close()
+        y = []
+        x1 = []
+        x2 = []
+        for var in self.result:
+            y.append(var[1] / DEPTH_SCALE)
+            x1.append(var[2] + CCL_OFFSET)
+            x2.append(var[3] * TENSION_SCALE)
 
-        con.close()
-
-        y = np.array([var[1] for var in result]) / DEPTH_SCALE
-        x1 = (np.array([var[2] for var in result]) + CCL_OFFSET) \
-                / CCL_FACTOR
-        x2 = np.array([var[3] for var in result]) * TENSION_SCALE
-
-        [ax.clear() for ax in self.axis]
-        self.load_subp_style()
+        # Calculate speed
+        self.set_depthnSpeed(y[-10:])
+        # Plot data ~ 48.0 ms TODO: Maybe multithread this
+        [ax.clear() for ax in self.axis] # takes ~ 47.0 ms!!
         self.axis[0].plot(x1, y, label="CCL", linewidth=1.0)
         self.axis[1].plot(x2, y, label="Tension", linewidth=1.0)
-        self.fig.gca().invert_yaxis() # To plot down
-        self.fig.legend(ncol=2, loc='upper center',
-                        mode="expand", borderaxespad=0.)
+        # This two below takes ~ 15.0 ms
+        self.load_subp_style()
+        self.draw_idle() #  increase performance x10 vs draw() method
 
-        self.draw()
 
     def load_subp_style(self):
+        self.fig.legend(ncol=2, loc='upper center',
+                        mode="expand",
+                        borderaxespad=0.)
 
+        # To plot/log down. TODO: Evaluate movement
+        self.fig.gca().invert_yaxis()
         axis_major_step = []
         axis_minor_step = []
-        # TODO: ranges hardcoded
-        axis_xmin = [-10, 0]
-        axis_xmax = [10, 20000]
-
-        for i in range(len(axis_xmin)):
-            axis_major_step.append(int((axis_xmax[i] - axis_xmin[i]) \
+        for i in range(len(self.axis_xmin)):
+            axis_major_step.append(int((self.axis_xmax[i] - self.axis_xmin[i]) \
                                        / (2 * (1 + i)))
                                   )
             axis_minor_step.append(axis_major_step[i] / 5)
-            self.axis[i].set_xlim(axis_xmin[i],axis_xmax[i])
+            self.axis[i].set_xlim(self.axis_xmin[i],self.axis_xmax[i])
 
         self.axis[0].tick_params(axis='y', which='major', pad=7)
         self.axis[0].yaxis.tick_right()
 
 
-        for i, ax in zip(range(len(self.axis)), self.axis):
+        for i, ax in enumerate(self.axis):
 
             ax.xaxis.tick_top()
             ax.xaxis.set_ticks_position('top')
@@ -157,3 +179,21 @@ class MyDynamicMplCanvas(MyMplCanvas):
             ax.yaxis.set_major_locator(ticker.MultipleLocator(10))
             ax.yaxis.set_minor_locator(ticker.MultipleLocator(2))
 
+    def set_depthnSpeed(self, y):
+        if y:
+            depth = y[-1]
+            speed = 0
+            if len(y) > 9:
+                speedLst = []
+                while y:
+                    speedLst.append((y.pop() - y.pop())/0.01)
+
+                speed = np.average(speedLst)
+
+            self.speednDepthChanged.emit([depth, speed])
+
+    def dialog_critical(self, s):
+        dlg = QMessageBox(self)
+        dlg.setText(s)
+        dlg.setIcon(QMessageBox.Critical)
+        dlg.show()
