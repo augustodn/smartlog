@@ -2,7 +2,7 @@ from PyQt5 import uic
 from PyQt5.QtWidgets import QMainWindow, qApp, QMessageBox
 from PyQt5.QtCore import QTimer
 from . import (digitalDisplay as dsp, curvePlot as cplt, newWell as nw,
-               loadPass as lp, settings)
+               loadPass as lp, settings, saveAs)
 import model.main as model
 import lib.arducom as arducom
 import time
@@ -21,6 +21,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.newWell = nw.NewWell()
         self.loadPass = lp.LoadPass()
         self.curvePlot = cplt.CurvePlot()
+        self.saveAs = saveAs.SaveAs()
         self.serial = arducom.Serial()
         self.serial.opened = False
         self.ardu2DB = arducom.DB()
@@ -34,6 +35,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.actionRun.triggered.connect(self.new_run)
         self.actionPass.triggered.connect(self.new_pass)
         self.actionLoad.triggered.connect(self.load_pass)
+        self.actionSaveAs.triggered.connect(self.save_as)
 
         self.actionStart.triggered.connect(self.open_con)
         self.actionStop.triggered.connect(self.close_con)
@@ -71,6 +73,9 @@ class MainWindow(QMainWindow, Ui_MainWindow):
     def load_pass(self):
         self.loadPass.show()
 
+    def save_as(self):
+        self.saveAs.pdf()
+
     def new_run(self):
         run = self.session.active['run']
         self.session.active['run'] = run + 1
@@ -95,6 +100,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
         self.session = session
         self.curvePlot.session = session
+        self.saveAs.session = session
         print(self.session.active)
         self.actionPlot.setEnabled(True)
 
