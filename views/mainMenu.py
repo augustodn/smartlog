@@ -6,7 +6,6 @@ from . import (digitalDisplay as dsp, curvePlot as cplt, newWell as nw,
 import model.main as model
 import lib.arducom as arducom
 import time
-from ttictoc import TicToc
 
 qt_creator_file = "./resources/mainMenu.ui"
 Ui_MainWindow, QtBaseClass = uic.loadUiType(qt_creator_file)
@@ -25,7 +24,6 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.serial = arducom.Serial()
         self.serial.opened = False
         self.ardu2DB = arducom.DB()
-        self.serSeq = 0
         self.settings = settings.Settings()
         self.speedWdgt = dsp.DigitalDisplay(title='Speed', decPnt=True)
         self.depthWdgt = dsp.DigitalDisplay(title='Depth', decPnt=True)
@@ -124,10 +122,11 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                                  """winch panel is connected and retry""")
             return -1
 
+        self.serSeq = 0
+        self.lastItem = 0
         self.session.active['mode'] = 'realtime'
         self.update_session(self.session)
         self.curvePlot.update_depth()
-        self.lastItem = 0
 
         self.ardu2DB.open_db(self.session.active['DBpath'])
         # TODO: Probably better to put this in a thread
