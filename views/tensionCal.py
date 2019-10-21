@@ -1,43 +1,36 @@
 from PyQt5 import uic
 from PyQt5.QtWidgets import QDialog, QApplication, QMessageBox
 from PyQt5.QtCore import Qt, QTimer
-import serial
-#import lib.arducom as arducom
-import importlib.util
+import lib.arducom as arducom
 import numpy as np
 import glob, os
 from datetime import datetime
 
-#TODO: Fix this when integrated to the SLS SW
-spec = importlib.util.spec_from_file_location("arducom", "../lib/arducom.py")
-arducom = importlib.util.module_from_spec(spec)
-spec.loader.exec_module(arducom)
-
-Ui_TensionCal, QtBaseClass = uic.loadUiType("./tensionCal.ui")
+qt_creator_file = "./resources/tensionCal.ui"
+Ui_TensionCal, QtBaseClass = uic.loadUiType(qt_creator_file)
 
 class TensionCal(QDialog, Ui_TensionCal):
-    def __init__(self, parent=None):
+    def __init__(self, port, brate, parent=None):
         super(TensionCal, self).__init__(parent)
         Ui_TensionCal.__init__(self)
         self.setupUi(self)
         self.serial = arducom.Serial()
         self.serial.opened = False
-        #TODO: Fix port & brate with arguments from mainMenu
-        self.port = '/dev/ttyUSB0'
-        self.brate = 500000
+        self.port = port
+        self.brate = brate
         self.open_con()
         self.noToolsCal = False
         self.toolStrCal = False
         # Read coefficients verify path
-        # TODO: Change path to ./cal/
-        fileList = glob.glob('*.cal')
+        fileList = glob.glob('./cals/*.cal')
         self.coef = None
         self.rawCounts = [0, 0, 0, 1023]
         self.avgTension = [0, 0, 0, 20000]
         self.comboBox.insertItems(len(fileList), fileList)
 
+        # TODO: Fix save_cal call
         self.buttonBox.accepted.connect(self.save_cal)
-        self.buttonBox.rejected.connect(self.close)
+        self.buttonBox.rejected.connect(self.save_cal)
         self.calibrate.clicked.connect(self.make_cal)
         self.comboBox.activated.connect(self.read_cal_file)
 
@@ -112,6 +105,7 @@ class TensionCal(QDialog, Ui_TensionCal):
 
 
     def save_cal(self):
+        self.serTimer.stop()
         self.close()
 
     def open_con(self):
@@ -174,9 +168,3 @@ class TensionCal(QDialog, Ui_TensionCal):
         dlg.setText(s)
         dlg.setIcon(QMessageBox.Critical)
         dlg.show()
-
-if __name__ == "__main__":
-    app = QApplication([])
-    dialog = TensionCal()
-    dialog.show()
-    app.exec_()

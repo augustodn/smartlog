@@ -2,7 +2,7 @@ from PyQt5 import uic
 from PyQt5.QtWidgets import QMainWindow, qApp, QMessageBox
 from PyQt5.QtCore import QTimer
 from . import (digitalDisplay as dsp, curvePlot as cplt, newWell as nw,
-               loadPass as lp, settings, saveAs)
+               loadPass as lp, settings, saveAs, tensionCal)
 import model.main as model
 import lib.arducom as arducom
 import time
@@ -37,6 +37,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
         self.actionStart.triggered.connect(self.open_con)
         self.actionStop.triggered.connect(self.close_con)
+        self.actionTension.triggered.connect(self.cal_tension)
         self.actionSettings.triggered.connect(self.new_settings)
 
         self.actionPlot.triggered.connect(self.curve_plot)
@@ -101,6 +102,10 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.saveAs.session = session
         print(self.session.active)
         self.actionPlot.setEnabled(True)
+        self.actionSpeed.setEnabled(True)
+        self.actionDepth.setEnabled(True)
+        self.actionDepth.setEnabled(True)
+        self.actionSaveAs.setEnabled(True)
 
     def open_con(self):
         """ Open microcontroller connection using the API """
@@ -171,10 +176,16 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.brate = preferences['brate']
         self.curvePlot.canvas.axis_xmin = preferences['axis_xmin']
         self.curvePlot.canvas.axis_xmax = preferences['axis_xmax']
+        self.menuCalibrate.setEnabled(True)
+        self.menuConnect.setEnabled(True)
 
     def update_displays(self, value):
         self.depthWdgt.lcdNumber.display(str(value[0]))
         self.speedWdgt.lcdNumber.display(str(value[1]))
+
+    def cal_tension(self):
+        self.tensionCal = tensionCal.TensionCal(self.port, self.brate)
+        self.tensionCal.show()
 
     def dialog_critical(self, s):
         dlg = QMessageBox(self)

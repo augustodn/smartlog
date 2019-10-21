@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>456</width>
-    <height>58</height>
+    <height>63</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -20,7 +20,7 @@
      <x>0</x>
      <y>0</y>
      <width>456</width>
-     <height>20</height>
+     <height>25</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuLog">
@@ -46,13 +46,27 @@
      <string>Edit</string>
     </property>
     <widget class="QMenu" name="menuConnect">
+     <property name="enabled">
+      <bool>false</bool>
+     </property>
      <property name="title">
       <string>Connect</string>
      </property>
      <addaction name="actionStart"/>
      <addaction name="actionStop"/>
     </widget>
+    <widget class="QMenu" name="menuCalibrate">
+     <property name="enabled">
+      <bool>false</bool>
+     </property>
+     <property name="title">
+      <string>Calibrate</string>
+     </property>
+     <addaction name="actionTension"/>
+     <addaction name="actionDepthCal"/>
+    </widget>
     <addaction name="menuConnect"/>
+    <addaction name="menuCalibrate"/>
     <addaction name="separator"/>
     <addaction name="actionSettings"/>
    </widget>
@@ -93,11 +107,17 @@
    </property>
   </action>
   <action name="actionDepth">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
    <property name="text">
     <string>Depth</string>
    </property>
   </action>
   <action name="actionSpeed">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
    <property name="text">
     <string>Speed</string>
    </property>
@@ -138,6 +158,9 @@
    </property>
   </action>
   <action name="actionStart">
+   <property name="enabled">
+    <bool>true</bool>
+   </property>
    <property name="text">
     <string>Start</string>
    </property>
@@ -148,8 +171,21 @@
    </property>
   </action>
   <action name="actionSaveAs">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
    <property name="text">
     <string>Save As</string>
+   </property>
+  </action>
+  <action name="actionTension">
+   <property name="text">
+    <string>Tension</string>
+   </property>
+  </action>
+  <action name="actionDepthCal">
+   <property name="text">
+    <string>Depth</string>
    </property>
   </action>
  </widget>

@@ -1,5 +1,5 @@
 from PyQt5 import uic
-from PyQt5.QtWidgets import QDialog
+from PyQt5.QtWidgets import QDialog, QMessageBox
 from PyQt5.QtCore import pyqtSignal
 import serial.tools.list_ports as serial
 
@@ -29,11 +29,24 @@ class Settings(QDialog, Ui_Settings):
 
     def save_prefs(self):
         preferences = {}
-        preferences['port'] = self.portDevices[self.portComboBox.currentIndex()]
-        preferences['brate'] = int(self.bRateComboBox.currentText())
-        preferences['axis_xmin'] = [self.minLeftSpinBox.value(),
-                                    self.minRightSpinBox.value()]
-        preferences['axis_xmax'] = [self.maxLeftSpinBox.value(),
-                                    self.maxRightSpinBox.value()]
-        self.prefsChanged.emit(preferences)
+        try:
+            preferences['port'] = self.portDevices[\
+                                    self.portComboBox.currentIndex()]
+            preferences['brate'] = int(self.bRateComboBox.\
+                                       currentText())
+            preferences['axis_xmin'] = [self.minLeftSpinBox.value(),
+                                        self.minRightSpinBox.value()]
+            preferences['axis_xmax'] = [self.maxLeftSpinBox.value(),
+                                        self.maxRightSpinBox.value()]
+            self.prefsChanged.emit(preferences)
+        except:
+            self.dialog_critical("""Please check the settings """
+                                 """selected and retry""")
+
         self.close()
+
+    def dialog_critical(self, s):
+        dlg = QMessageBox(self)
+        dlg.setText(s)
+        dlg.setIcon(QMessageBox.Critical)
+        dlg.show()
