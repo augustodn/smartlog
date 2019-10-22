@@ -2,7 +2,7 @@ from PyQt5 import uic
 from PyQt5.QtWidgets import QMainWindow, qApp, QMessageBox
 from PyQt5.QtCore import QTimer
 from . import (digitalDisplay as dsp, curvePlot as cplt, newWell as nw,
-               loadPass as lp, settings, saveAs, tensionCal)
+               loadPass as lp, settings, saveAs, tensionCal, depthCal)
 import model.main as model
 import lib.arducom as arducom
 import time
@@ -38,6 +38,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.actionStart.triggered.connect(self.open_con)
         self.actionStop.triggered.connect(self.close_con)
         self.actionTension.triggered.connect(self.cal_tension)
+        self.actionDepthCal.triggered.connect(self.cal_depth)
         self.actionSettings.triggered.connect(self.new_settings)
 
         self.actionPlot.triggered.connect(self.curve_plot)
@@ -104,8 +105,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.actionPlot.setEnabled(True)
         self.actionSpeed.setEnabled(True)
         self.actionDepth.setEnabled(True)
-        self.actionDepth.setEnabled(True)
         self.actionSaveAs.setEnabled(True)
+        self.menuConnect.setEnabled(True)
 
     def open_con(self):
         """ Open microcontroller connection using the API """
@@ -169,6 +170,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                 print("[INFO] Failed to write, retrying")
 
     def new_settings(self):
+        self.settings.refresh_comboBoxes()
         self.settings.show()
 
     def update_settings(self, preferences):
@@ -177,7 +179,6 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.curvePlot.canvas.axis_xmin = preferences['axis_xmin']
         self.curvePlot.canvas.axis_xmax = preferences['axis_xmax']
         self.menuCalibrate.setEnabled(True)
-        self.menuConnect.setEnabled(True)
 
     def update_displays(self, value):
         self.depthWdgt.lcdNumber.display(str(value[0]))
@@ -186,6 +187,10 @@ class MainWindow(QMainWindow, Ui_MainWindow):
     def cal_tension(self):
         self.tensionCal = tensionCal.TensionCal(self.port, self.brate)
         self.tensionCal.show()
+
+    def cal_depth(self):
+        self.depthCal = depthCal.DepthCal(self.port, self.brate)
+        self.depthCal.show()
 
     def dialog_critical(self, s):
         dlg = QMessageBox(self)

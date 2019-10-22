@@ -26,7 +26,7 @@
     <item>
      <widget class="QTabWidget" name="tabWidget">
       <property name="currentIndex">
-       <number>1</number>
+       <number>2</number>
       </property>
       <widget class="QWidget" name="commTab">
        <attribute name="title">
@@ -208,6 +208,57 @@
            </spacer>
           </item>
          </layout>
+        </widget>
+       </widget>
+      </widget>
+      <widget class="QWidget" name="calTab">
+       <attribute name="title">
+        <string>Cals</string>
+       </attribute>
+       <widget class="QGroupBox" name="groupBox_3">
+        <property name="geometry">
+         <rect>
+          <x>10</x>
+          <y>10</y>
+          <width>381</width>
+          <height>61</height>
+         </rect>
+        </property>
+        <property name="title">
+         <string>Depth Calibration File</string>
+        </property>
+        <widget class="QComboBox" name="tensionComboBox">
+         <property name="geometry">
+          <rect>
+           <x>10</x>
+           <y>30</y>
+           <width>361</width>
+           <height>23</height>
+          </rect>
+         </property>
+        </widget>
+       </widget>
+       <widget class="QGroupBox" name="groupBox_4">
+        <property name="geometry">
+         <rect>
+          <x>10</x>
+          <y>80</y>
+          <width>381</width>
+          <height>80</height>
+         </rect>
+        </property>
+        <property name="title">
+         <string>Tension Calibration File</string>
+        </property>
+        <widget class="QComboBox" name="depthComboBox">
+         <property name="geometry">
+          <rect>
+           <x>10</x>
+           <y>40</y>
+           <width>361</width>
+           <height>23</height>
+          </rect>
+         </property>
         </widget>
        </widget>
       </widget>

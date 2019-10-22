@@ -22,7 +22,7 @@ class TensionCal(QDialog, Ui_TensionCal):
         self.noToolsCal = False
         self.toolStrCal = False
         # Read coefficients verify path
-        fileList = glob.glob('./cals/*.cal')
+        fileList = glob.glob('./cals/tension*.cal')
         self.coef = None
         self.rawCounts = [0, 0, 0, 1023]
         self.avgTension = [0, 0, 0, 20000]
@@ -85,12 +85,12 @@ class TensionCal(QDialog, Ui_TensionCal):
             fit = np.polyfit(self.rawCounts,self.avgTension,1)
             fit_fn = np.poly1d(fit)
             self.new_cal(fit_fn)
-        elif ret > 1024:
+        else:
             dlg.close()
 
     def new_cal(self, fit_fn):
         """ Save coefficients to new file """
-        fname = datetime.now().strftime("tension_%Y%m%d_%H%M.cal")
+        fname = datetime.now().strftime("./cals/tension_%Y%m%d_%H%M.cal")
         calDate = datetime.now().strftime("%Y-%m-%d %H:%M")
         ff = open(fname, 'w+')
         ff.writelines("Calibration date: {}\n".format(calDate))
@@ -151,7 +151,6 @@ class TensionCal(QDialog, Ui_TensionCal):
             else:
                 # Serial connection is not closed mainly because this resets
                 # depth display
-                # self.serial.close()
                 self.serTimer.stop()
                 self.check_cal()
         return 0
@@ -159,6 +158,7 @@ class TensionCal(QDialog, Ui_TensionCal):
     def calc_average(self, data, col):
         data = np.array(data)
         tension_raw = data.transpose()[col]
+        # Replace raw ADC value with the calibrated one
         tension = [self.coef[t] for t in tension_raw]
         return np.average(tension), int(np.average(tension_raw))
 
