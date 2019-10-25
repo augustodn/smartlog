@@ -1,47 +1,44 @@
 <table id=table-width>
 <tr>
-    <td colspan=2 id=logo><img id=logo src="logo.jpg" alt="logo"></td>
-    <td colspan=4 id=title>{{ well['service'] }}</td>
+    <td colspan=3 id=logo><img id=logo src="logo.jpg" alt="logo"></td>
+    <td colspan=5 id=title>{{ well['service'] }}</td>
 </tr>
+</table>
+<table id=table-width>
 <tr>
-   <td colspan=6 id=row-height></td>
-</tr>
-<tr>
-   <td> Compa&ntildeia:</td>
-   <td> {{ well['company'] }}</td>
-   <td> Fecha:</td>
-   <td> {{ well['date'] }} </td>
-   <td rowspan=5 colspan=2 id=cell-top-align>Comentarios:<br>
-     {{ well['comments'] }}
-   </td>
+ <td rowspan=6 id=vertical-text>Compa&ntildeia: {{ well['company'] }}</td>
+ <td rowspan=6 id=vertical-text> Pozo: {{ well['name'] }} </td>
+ <td rowspan=6 id=vertical-text> Yacimiento: {{ well['field'] }} </td>
+ <td rowspan=6 id=vertical-text> Provincia: {{ well['province'] }} </td>
+ <td rowspan=6 id=vertical-text> Pais: {{ well['country'] }} </td>
+ <td colspan=3 id=mainData>
+   <div id=row-width> Compa&ntildeia: {{ well['company'] }}</div>
+   <div id=row-width> Fecha: {{ well['date'] }} </div>
  </td>
 </tr>
 <tr>
-    <td> Pozo:</td>
-    <td> {{ well['name'] }} </td>
-    <td> Servicio:</td>
-    <td>  {{ well['service'] }} </td>
+ <td colspan=3 id=mainData>
+    <div id=row-width> Pozo:{{ well['name'] }} </div>
+    <div id=row-width> Servicio: {{ well['service'] }} </div>
  </td>
 </tr>
 <tr>
-   <td> Yacimiento:</td>
-   <td> {{ well['field'] }}</td>
-   <td> Casing:</td>
-   <td> {{well['casing'] }} </td>
+ <td colspan=3 id=mainData>
+   <div id=row-width> Yacimiento: {{ well['field'] }}</div>
+   <div id=row-width> Casing: {{well['casing'] }} </div>
  </td>
 </tr>
 <tr>
-	<td> Provincia: </td>
-	<td>{{ well['province'] }}</td>
-	<td></td>
-	<td></td>
+  <td colspan=3 id=mainData>
+    <div id=row-width> Provincia: {{ well['province'] }}</div>
+    <div id=row-width> Pais: {{ well['country'] }}</div>
+  </td>
 </tr>
-	<td> Pais: </td> 
-	<td> {{ well['country'] }}</td>
-	<td></td>
-	<td></td>
 <tr>
-  <td colspan=6 id=row-height> </td>
+  <td colspan=3 id=noBorderBottom>Comentarios </td>
+</tr>
+<tr>
+ <td colspan=3 id=no-borders>{{ well['comments'] }} </td>
 </tr>
 </table>
 <table id=table-width>
@@ -86,7 +83,7 @@
     <td> </td>
 </tr>
 <tr>
-   <td colspan=3 id=footNote> {{ well['footNote'] }} </td>
+   <td colspan=3> {{ well['footNote'] }} </td>
 </tr>
 </table>
 
@@ -117,7 +114,9 @@ html {
 #no-borders{
   border-style:none;
 }
-#cell-top-align{
+#row-width{
+  width: 400px;
+  display: inline-block;
   vertical-align:top;
 }
 #col-border{
@@ -125,7 +124,6 @@ html {
 }
 #row-height{
   height: 22px;
-  background-color:lightgray;
 }
 #mainData{
   border-top:none;
@@ -146,8 +144,5 @@ html {
   text-align: center;
   font-size: x-large;
   font-weight: bolder;
-}
-#footNote{
-  text-align:center;
 }
 </style>

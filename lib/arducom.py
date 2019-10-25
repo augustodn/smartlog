@@ -9,6 +9,7 @@ class Serial:
     def __init__(self):
         self.STR_STRING = '#STR'
         self.DTA_STRING = '#DTA'
+        self.SND_STRING = '#SND'
         self.ARDU_CONFIRM = b'#OK'
         self.SEPARATOR = b'|-|'
         self.id_seq_old = -1
@@ -54,6 +55,8 @@ class Serial:
         # Send command to arduino
         print("[CMD] Give me data")
         self.ser.write(self.DTA_STRING.encode())
+        # TODO: Fix this
+        time.sleep(1)
         self.inbuf = self.ser.inWaiting()
         if (self.inbuf):
             print("[INFO] Reading buffer")
@@ -103,6 +106,101 @@ class Serial:
 
         print("[INFO] {} total packets read".format(id_seq))
         return(data_list_ints, self.id_seq_acum)
+
+    def set_depth(self, depth, depthCal):
+        self.ser.reset_input_buffer()
+        # Calculate the encoder counts for the depth value
+        counts = int(depth * depthCal)
+        if (counts > 2147483647 or counts < -2147483648):
+            print("[ERROR] Depth exceeds min or max limit")
+            return -1
+
+        str2send = self.SND_STRING + str(counts)
+        print("[CMD] Sending: {}".format(str2send))
+
+        # Convert counts -> hex -> bin format
+        countsHex = hex(counts)[2:]
+        # If digits are less than 4 bytes
+        # pad with 0's at the left
+        if len(countsHex) < 8:
+            countsHex = (8-len(countsHex)) * '0' + countsHex
+        countsBytes = bytes.fromhex(countsHex)
+
+        self.ser.write(self.SND_STRING.encode())
+        self.ser.write(countsBytes)
+        self.ser.write('\n'.encode())
+        self.retry = 0
+        # Wait in a loop until the response
+        # reaches the buffer
+        while(self.ser.inWaiting() < 3 and self.retry < 5):
+            time.sleep(.1)
+            self.retry = self.retry + 1
+
+        if(self.ser.inWaiting() and
+           self.ser.read(3) == self.ARDU_CONFIRM):
+
+                print("[INFO] New depth value set sucessfully")
+                return 0
+
+        print("[ERROR] Depth value was not validated")
+        return -2
+
+
+    def set_depthCal(self, depthCal):
+        SDC_STRING = '#SDC'
+        # Convert to nearest integer
+        depthCal = round(depthCal * 100)
+
+        if (depthCal > 65535 or depthCal < 0):
+            print("[ERROR] Cal factor exceeds min or max limit")
+            return -1
+
+        str2send = SDC_STRING + str(depthCal)
+        print("[CMD] Sending: {}".format(str2send))
+
+        # Convert counts -> hex -> bin format
+        depthCalHex = hex(depthCal)[2:]
+        # If digits are less than 4 bytes
+        # pad with 0's at the left
+        if len(depthCalHex) < 4:
+            depthCalHex = (4-len(depthCalHex)) * '0' + depthCalHex
+        depthCalBytes = bytes.fromhex(depthCalHex)
+
+        self.ser.write(SDC_STRING.encode())
+        self.ser.write(depthCalBytes)
+        self.ser.write('\n'.encode())
+        self.retry = 0
+        # Wait in a loop until the response
+        # reaches the buffer
+        while(self.ser.inWaiting() < 3 and self.retry < 5):
+            time.sleep(.1)
+            self.retry = self.retry + 1
+
+        if(self.ser.inWaiting() and
+           self.ser.read(3) == self.ARDU_CONFIRM):
+
+                print("[INFO] New depth calibration set sucessfully")
+                return 0
+
+        print("[ERROR] Depth calibration was not validated")
+        return -2
+
+    def set_tensionCal(self, tenCal):
+        STC_STRING = '#STC'
+        self.ser.write(STC_STRING.encode())
+
+        self.retry = 0
+        # Wait in a loop until the response
+        # reaches the buffer
+        while(self.ser.inWaiting() < 3 and self.retry < 5):
+            time.sleep(.1)
+            self.retry = self.retry + 1
+
+        if self.ser.inWaiting():
+            # Wait buffer to fill
+            time.sleep(1)
+            print (self.ser.read_all())
+
 
     def close(self):
         print("[INFO] Closing serial connection")

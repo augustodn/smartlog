@@ -1,3 +1,2 @@
 import pdfkit
-for i in range(1,11):
-    pdfkit.from_file(str(i) + '.html', str(i) + '.pdf')
+pdfkit.from_file('template_output.html', 'template.pdf')
