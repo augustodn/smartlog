@@ -55,8 +55,6 @@ class Serial:
         # Send command to arduino
         print("[CMD] Give me data")
         self.ser.write(self.DTA_STRING.encode())
-        # TODO: Fix this
-        time.sleep(1)
         self.inbuf = self.ser.inWaiting()
         if (self.inbuf):
             print("[INFO] Reading buffer")
@@ -186,7 +184,16 @@ class Serial:
         return -2
 
     def set_tensionCal(self, tenCal):
+        """
+        Used to download a new calibration table to ucontroller
+        it should ACK the value that has been received. Routine
+        should check before sending the next one.
+        Table has 1024 values one per each ADC read one.
+        """
+
         STC_STRING = '#STC'
+        str2send = STC_STRING
+        print("[CMD] Sending: {}".format(str2send))
         self.ser.write(STC_STRING.encode())
 
         self.retry = 0
@@ -196,10 +203,15 @@ class Serial:
             time.sleep(.1)
             self.retry = self.retry + 1
 
+        """
+        TODO: ucontroller should send the value again and this routine
+        evaluate if jump to next one or retry
+        """
+
         if self.ser.inWaiting():
             # Wait buffer to fill
-            time.sleep(1)
-            print (self.ser.read_all())
+            print("[INFO] Read some tension calibration values")
+            print(self.ser.read_all())
 
 
     def close(self):

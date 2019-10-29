@@ -3,6 +3,7 @@ from PyQt5.QtWidgets import QDialog, QMessageBox
 from PyQt5.QtCore import pyqtSignal
 import glob, os
 import serial.tools.list_ports as serial
+import lib.arducom as arducom
 
 
 qt_creator_file = "./resources/settings.ui"
@@ -20,6 +21,7 @@ class Settings(QDialog, Ui_Settings):
         self.refresh_comboBoxes()
 
         # Connections
+        self.sendDepthCal.clicked.connect(self.send_depthCal)
         self.buttonBox.accepted.connect(self.save_prefs)
         self.buttonBox.rejected.connect(self.close)
 
@@ -33,7 +35,7 @@ class Settings(QDialog, Ui_Settings):
         bRateList = ['9600', '115200', '500000']
         self.bRateComboBox.insertItems(len(bRateList), bRateList)
 
-        portList = [port.name + " " + port.description
+        portList = [port.device + " " + port.description
                     for port in serial.comports()]
         self.portDevices = [port.device for port in serial.comports()]
         self.portComboBox.insertItems(len(portList), portList)
@@ -42,6 +44,36 @@ class Settings(QDialog, Ui_Settings):
         depthCalList = glob.glob('./cals/depth*.cal')
         self.tensionComboBox.insertItems(len(tensionCalList), tensionCalList)
         self.depthComboBox.insertItems(len(depthCalList), depthCalList)
+
+    def send_depthCal(self):
+        calPath = self.depthComboBox.currentText()
+        if not calPath:
+            self.dialog_critical("Please select a calibration file first")
+            return -1
+        calFile = open(calPath, 'r')
+        calFile.readline()
+        calValue = float(calFile.readline())
+        calFile.close()
+        try:
+            port = self.portDevices[\
+                   self.portComboBox.currentIndex()]
+            brate = int(self.bRateComboBox.currentText())
+        except:
+            self.dialog_critical("""Please select the correspondent """
+                                 """ port and bitrate """)
+            return -1
+        serial = arducom.Serial()
+        # TODO: Check if port is already opened
+        serial.open(port, brate, 1)
+        serial.start()
+        answer = serial.set_depthCal(calValue)
+        if answer < 0:
+            self.dialog_critical("New calibration not verified")
+            return -1
+        serial.close()
+        self.dialog_critical("New calibration set")
+        return 0
+
 
     def save_prefs(self):
         preferences = {}

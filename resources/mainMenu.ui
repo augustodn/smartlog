@@ -65,8 +65,18 @@
      <addaction name="actionTension"/>
      <addaction name="actionDepthCal"/>
     </widget>
+    <widget class="QMenu" name="menuCorrect">
+     <property name="enabled">
+      <bool>false</bool>
+     </property>
+     <property name="title">
+      <string>Correct</string>
+     </property>
+     <addaction name="actionDepthCorrect"/>
+    </widget>
     <addaction name="menuConnect"/>
     <addaction name="menuCalibrate"/>
+    <addaction name="menuCorrect"/>
     <addaction name="separator"/>
     <addaction name="actionSettings"/>
    </widget>
@@ -184,6 +194,11 @@
    </property>
   </action>
   <action name="actionDepthCal">
+   <property name="text">
+    <string>Depth</string>
+   </property>
+  </action>
+  <action name="actionDepthCorrect">
    <property name="text">
     <string>Depth</string>
    </property>

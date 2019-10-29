@@ -1,8 +1,9 @@
 from PyQt5 import uic
 from PyQt5.QtWidgets import QMainWindow, qApp, QMessageBox
 from PyQt5.QtCore import QTimer
-from . import (digitalDisplay as dsp, curvePlot as cplt, newWell as nw,
-               loadPass as lp, settings, saveAs, tensionCal, depthCal)
+from . import (digitalDisplay as dsp, curvePlot as cplt,
+               newWell as nw, loadPass as lp, settings, saveAs,
+               tensionCal, depthCal, setDepth)
 import model.main as model
 import lib.arducom as arducom
 import time
@@ -39,6 +40,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.actionStop.triggered.connect(self.close_con)
         self.actionTension.triggered.connect(self.cal_tension)
         self.actionDepthCal.triggered.connect(self.cal_depth)
+        self.actionDepthCorrect.triggered.connect(self.set_depth)
         self.actionSettings.triggered.connect(self.new_settings)
 
         self.actionPlot.triggered.connect(self.curve_plot)
@@ -178,6 +180,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.brate = preferences['brate']
         self.curvePlot.canvas.axis_xmin = preferences['axis_xmin']
         self.curvePlot.canvas.axis_xmax = preferences['axis_xmax']
+        self.depthCalPath = preferences['depth_cal']
+        self.menuCorrect.setEnabled(True)
         self.menuCalibrate.setEnabled(True)
 
     def update_displays(self, value):
@@ -191,6 +195,10 @@ class MainWindow(QMainWindow, Ui_MainWindow):
     def cal_depth(self):
         self.depthCal = depthCal.DepthCal(self.port, self.brate)
         self.depthCal.show()
+
+    def set_depth(self):
+        self.setDepth = setDepth.SetDepth(self.depthCalPath)
+        self.setDepth.show()
 
     def dialog_critical(self, s):
         dlg = QMessageBox(self)
