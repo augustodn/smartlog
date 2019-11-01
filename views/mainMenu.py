@@ -1,5 +1,5 @@
 from PyQt5 import uic
-from PyQt5.QtWidgets import QMainWindow, qApp, QMessageBox
+from PyQt5.QtWidgets import QMainWindow, qApp, QMessageBox, QStatusBar
 from PyQt5.QtCore import QTimer
 from . import (digitalDisplay as dsp, curvePlot as cplt,
                newWell as nw, loadPass as lp, settings, saveAs,
@@ -28,6 +28,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.settings = settings.Settings()
         self.speedWdgt = dsp.DigitalDisplay(title='Speed', decPnt=True)
         self.depthWdgt = dsp.DigitalDisplay(title='Depth', decPnt=True)
+        self.setDepth = setDepth.SetDepth(None)
 
         # Connections
         self.actionWell.triggered.connect(self.new_well)
@@ -36,8 +37,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.actionLoad.triggered.connect(self.load_pass)
         self.actionSaveAs.triggered.connect(self.save_as)
 
-        self.actionStart.triggered.connect(self.open_con)
-        self.actionStop.triggered.connect(self.close_con)
+        self.actionStart.triggered.connect(self.start_dataAcq)
+        self.actionStop.triggered.connect(self.stop_dataPolling)
         self.actionTension.triggered.connect(self.cal_tension)
         self.actionDepthCal.triggered.connect(self.cal_depth)
         self.actionDepthCorrect.triggered.connect(self.set_depth)
@@ -47,16 +48,20 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.actionDepth.triggered.connect(self.depth_window)
         self.actionSpeed.triggered.connect(self.speed_window)
         self.actionExit.triggered.connect(qApp.quit)
-        # Signals
 
+        # Signals
         self.loadPass.sessionChanged.connect(self.update_session)
         self.newWell.sessionChanged.connect(self.update_session)
         self.settings.prefsChanged.connect(self.update_settings)
         self.curvePlot.canvas.speednDepthChanged.connect(self.update_displays)
+        self.setDepth.sendDepth2panel.connect(self.send_depth_panel)
+
         # Misc
         self.actionExit.setStatusTip('Exit the application')
         self.actionDepth.setStatusTip('Open depth window')
-        self.statusBar()
+        self.dbStatus = QStatusBar()
+        self.statusbar = self.statusBar()
+        self.statusbar.addWidget(self.dbStatus, stretch=1)
 
     def depth_window(self):
         self.depthWdgt.show()
@@ -109,8 +114,18 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.actionDepth.setEnabled(True)
         self.actionSaveAs.setEnabled(True)
         self.menuConnect.setEnabled(True)
+        msg = "Well: {} Run: {} Pass: {}".format(
+            session.active['well'],
+            str(session.active['run']),
+            session.active['pass'][5:])
+        self.dbStatus.showMessage(msg)
 
-    def open_con(self):
+    def start_dataAcq(self):
+        if not self.serial.opened:
+            self.open_serialCon()
+        self.start_dataPolling()
+
+    def open_serialCon(self):
         """ Open microcontroller connection using the API """
         msg = ("""Failed to open serial port, check if """
                """winch panel is connected and retry""")
@@ -125,6 +140,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             self.dialog_critical(msg)
             return -1
 
+    def start_dataPolling(self):
+        # serial.start() resets id_seq counter
         if not self.serial.start():
             self.dialog_critical("""Communication not established, check if """
                                  """winch panel is connected and retry""")
@@ -140,9 +157,10 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         # TODO: Probably better to put this in a thread
         self.serTimer = QTimer(self)
         self.serTimer.timeout.connect(self.read_data)
-        self.serTimer.start(1000)
+        self.serTimer.start(500)
+        return 0
 
-    def close_con(self):
+    def stop_dataPolling(self):
         """ Stop polling from microncontroller """
         self.serSeq = 0
         self.session.active['mode'] = 'database'
@@ -180,13 +198,19 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.brate = preferences['brate']
         self.curvePlot.canvas.axis_xmin = preferences['axis_xmin']
         self.curvePlot.canvas.axis_xmax = preferences['axis_xmax']
-        self.depthCalPath = preferences['depth_cal']
+        self.depthCal = preferences['depth_cal']
+        self.tensionCal = preferences['tension_cal']
+        self.curvePlot.canvas.DEPTH_SCALE = self.depthCal
+        self.curvePlot.canvas.TENSION_SCALE = self.tensionCal
+        self.saveAs.DEPTH_SCALE = self.depthCal
+        self.saveAs.TENSION_SCALE = self.tensionCal
         self.menuCorrect.setEnabled(True)
         self.menuCalibrate.setEnabled(True)
 
     def update_displays(self, value):
         self.depthWdgt.lcdNumber.display(str(value[0]))
-        self.speedWdgt.lcdNumber.display(str(value[1]))
+        speed = value[1] * 60
+        self.speedWdgt.lcdNumber.display(str(speed))
 
     def cal_tension(self):
         self.tensionCal = tensionCal.TensionCal(self.port, self.brate)
@@ -197,8 +221,19 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.depthCal.show()
 
     def set_depth(self):
-        self.setDepth = setDepth.SetDepth(self.depthCalPath)
         self.setDepth.show()
+
+    def send_depth_panel(self, depth):
+        if not self.serial.opened:
+            self.open_serialCon()
+            time.sleep(2)
+
+        answer = self.serial.set_depth(depth['val'], depth['cal'])
+        if answer < 0:
+            self.dialog_critical("New depth value not verified")
+            return -1
+        self.dialog_critical("Depth value set")
+        return 0
 
     def dialog_critical(self, s):
         dlg = QMessageBox(self)

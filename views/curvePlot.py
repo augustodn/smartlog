@@ -13,8 +13,8 @@ import time
 
 DEPTH_SCALE = 98.0
 TENSION_SCALE = 19.53125
-CCL_FACTOR = 51.1
-CCL_OFFSET = 0   # -511
+CCL_FACTOR = 55.1
+CCL_OFFSET = 0 # -511
 Ui_CurvePlot, QtBaseClass = uic.loadUiType("./resources/curvePlot.ui")
 
 class CurvePlot(QDialog, Ui_CurvePlot):
@@ -76,7 +76,7 @@ class MyMplCanvas(FigureCanvas):
     """Ultimately, this is a QWidget (as well as a FigureCanvasAgg, etc.)."""
 
     def __init__(self, parent=None, width=4, height=5, dpi=100, DB_PATH='',
-                 TABLE= '', mode=''):
+                 TABLE= '', mode='', DEPTH_SCALE=0, TENSION_SCALE=[]):
         self.fig, self.axis = plt.subplots(
                                 1, 2, # 1 row, 2 cols
                                 gridspec_kw={'width_ratios':[1, 2]},
@@ -86,6 +86,8 @@ class MyMplCanvas(FigureCanvas):
         self.DB_PATH = DB_PATH
         self.TABLE = TABLE
         self.mode = mode
+        self.DEPTH_SCALE = 0
+        self.TENSION_SCALE = []
         FigureCanvas.__init__(self, self.fig)
         self.setParent(parent)
         FigureCanvas.setSizePolicy(self,
@@ -123,10 +125,14 @@ class MyDynamicMplCanvas(MyMplCanvas):
         y = []
         x1 = []
         x2 = []
+        if (len(self.TENSION_SCALE) != 1024):
+            print("Tension scale array has not the proper lenght")
+            return -1
+
         for var in self.result:
-            y.append(var[1] / DEPTH_SCALE)
-            x1.append(var[2] + CCL_OFFSET)
-            x2.append(var[3] * TENSION_SCALE)
+            y.append(var[1] / self.DEPTH_SCALE)
+            x1.append((var[2] + CCL_OFFSET)/CCL_FACTOR)
+            x2.append(self.TENSION_SCALE[var[3]])
 
         # Calculate speed
         self.set_depthnSpeed(y[-10:])

@@ -2,12 +2,18 @@ import sqlite3
 import datetime
 from PyQt5.QtWidgets import QDialog, QFileDialog, QWidget, qApp
 import numpy as np
+import matplotlib
+matplotlib.use('Agg')
 from matplotlib.backends.backend_pdf import PdfPages
 import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
 import model.main as model
 from PyQt5 import uic
 from PyQt5.QtCore import pyqtSignal, QThread
+import jinja2
+import pdfkit
+import os
+from PyPDF2 import PdfFileMerger
 
 Ui_ProgressBar, QtBaseClass = uic.loadUiType("./resources/progressBar.ui")
 
@@ -26,12 +32,15 @@ class SaveAs(QWidget, Ui_ProgressBar):
         Ui_ProgressBar.__init__(self)
         self.setupUi(self)
         self.buttonBox.rejected.connect(self.cancel)
+        self.DEPTH_SCALE = DEPTH_SCALE
+        self.TENSION_SCALE = []
 
     def pdf(self):
-        path, _ = QFileDialog.getSaveFileName(
+        # self.make_frontPage()
+        self.path, _ = QFileDialog.getSaveFileName(
             self, "Save file", "", "PDF file (*.pdf)")
 
-        if path and self.session.active['DBpath']\
+        if self.path and self.session.active['DBpath']\
         and self.session.active['pass']:
             con = sqlite3.connect(self.session.active['DBpath'])
             rows = con.execute("SELECT COUNT(*) FROM {} order by id_seq asc"\
@@ -41,13 +50,67 @@ class SaveAs(QWidget, Ui_ProgressBar):
             con.close()
             self.progressBar.setRange(0, totPages)
             self.show()
-            self.thread = PDFThread(path, self.session, totPages)
+            self.thread = PDFThread(self.session, totPages)
+            self.thread.DEPTH_SCALE = self.DEPTH_SCALE
+            self.thread.TENSION_SCALE = self.TENSION_SCALE
             self.thread.change_value.connect(self.update_progress)
+            self.thread.finished.connect(self.make_frontPage)
             self.thread.start()
 
     def update_progress(self, value):
         self.progressBar.setValue(value)
+        """
         if value == self.progressBar.maximum():
+            self.make_frontPage()
+            self.close()
+        """
+
+    def make_frontPage(self):
+        templateLoader = jinja2.FileSystemLoader(searchpath="./")
+        templateEnv = jinja2.Environment(loader=templateLoader)
+        TEMPLATE_FILE = "./resources/template.html"
+        template = templateEnv.get_template(TEMPLATE_FILE)
+
+        # fetch data from well in DB
+        if self.session.active['DBpath'] and self.session.active['well']\
+        and self.session.active['run']:
+            well = self.session.active['well']
+            run = self.session.active['run']
+            con = sqlite3.connect(self.session.active['DBpath'])
+            data = con.execute("select * from well where name = '{}'".
+                               format(well)).fetchone()
+
+            # Generate Front Page
+            if data:
+                well = {
+                    'name': data[0], 'field': data[1],
+                    'area': data[2], 'province': data[3],
+                    'country': data[4], 'company': data[5],
+                    'driller': data[6], 'operator': data[7],
+                    'witness': data[8], 'date': data[9],
+                    'service': data[10], 'casing': '7',
+                    'comments': data[11], 'footNote': data[12],
+                    'inDate': data[13],
+                }
+                # TODO: Implement missing variables on template.html
+                outputText = template.render(well = well)
+                html_file = open("temp.html", 'w')
+                html_file.write(outputText)
+                html_file.close()
+                pdfkit.from_file('temp.html', 'frontpage.pdf')
+                os.remove('temp.html')
+
+            # merge it with pdfcurve
+            pdfs = ['frontpage.pdf', 'plot.pdf']
+            merger = PdfFileMerger()
+
+            for pdf in pdfs:
+                merger.append(pdf)
+
+            merger.write(self.path) # Replace it by path
+            merger.close()
+            os.remove('frontpage.pdf')
+            os.remove('plot.pdf')
             self.close()
 
     def cancel(self):
@@ -59,15 +122,18 @@ class SaveAs(QWidget, Ui_ProgressBar):
 
 class PDFThread(QThread):
     change_value = pyqtSignal(int)
+    finished = pyqtSignal()
 
-    def __init__(self, path, session, totPages, parent=None):
+    def __init__(self, session, totPages, parent=None):
         super(PDFThread, self).__init__(parent)
-        self.path = path
         self.session = session
         self.totPages = totPages
+        self.TENSION_SCALE = TENSION_SCALE
+        self.DEPTH_SCALE = DEPTH_SCALE
 
     def run(self):
-        with PdfPages(self.path) as pdf:
+        pdfFile = 'plot.pdf'
+        with PdfPages(pdfFile) as pdf:
             page = 0
             fig, axis = plt.subplots(
                              1, 2, # 1 row, 2 cols
@@ -89,9 +155,9 @@ class PDFThread(QThread):
                 x1 = []
                 x2 = []
                 for var in result:
-                    y.append(var[1] / DEPTH_SCALE)
-                    x1.append(var[2] + CCL_OFFSET)
-                    x2.append(var[3] * TENSION_SCALE)
+                    y.append(var[1] / self.DEPTH_SCALE)
+                    x1.append((var[2] + CCL_OFFSET)/CCL_FACTOR)
+                    x2.append(self.TENSION_SCALE[var[3]])
 
 
                 plt.rc('text', usetex=False)
@@ -147,3 +213,5 @@ class PDFThread(QThread):
                 plt.close()
 
             con.close()
+
+        self.finished.emit()

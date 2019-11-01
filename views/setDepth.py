@@ -9,7 +9,7 @@ qt_creator_file = "./resources/setDepth.ui"
 Ui_SetDepth, QtBaseClass = uic.loadUiType(qt_creator_file)
 
 class SetDepth(QDialog, Ui_SetDepth):
-    prefsChanged = pyqtSignal(dict)
+    sendDepth2panel = pyqtSignal(dict)
 
     def __init__(self, calPath, parent=None):
         super(SetDepth, self).__init__(parent)
@@ -27,22 +27,10 @@ class SetDepth(QDialog, Ui_SetDepth):
         calFile.readline()
         depthCal = float(calFile.readline())
         calFile.close()
-        print(depth, depthCal)
-        self.dialog_critical("Depth value set")
+        self.sendDepth2panel.emit({'val': depth, 'cal': depthCal})
         # TODO: Emit a signal to mainMenu, use its serial object to
         # command set_depth method. Maybe its a good idea to use the
         # same in settings to download cal depth factor
-        """
-        serial = arducom.Serial()
-        serial.open(self.port, self.brate, 1)
-        serial.start()
-        answer = serial.set_depth(depth, depthCal)
-        if answer < 0:
-            self.dialog_critical("New depth value not verified")
-            return -1
-        self.dialog_critical("Depth value set")
-        return 0
-        """
         self.close()
 
     def dialog_critical(self, s):

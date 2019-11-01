@@ -86,15 +86,30 @@ class Settings(QDialog, Ui_Settings):
                                         self.minRightSpinBox.value()]
             preferences['axis_xmax'] = [self.maxLeftSpinBox.value(),
                                         self.maxRightSpinBox.value()]
-            preferences['tension_cal'] = self.tensionComboBox.currentText()
-            preferences['depth_cal'] = self.depthComboBox.currentText()
-
+            tension_cal_path = self.tensionComboBox.currentText()
+            depth_cal_path = self.depthComboBox.currentText()
+            preferences['tension_cal'] = self.get_tension_cal(tension_cal_path)
+            preferences['depth_cal'] = self.get_depth_cal(depth_cal_path)
             self.prefsChanged.emit(preferences)
         except:
             self.dialog_critical("""Please check the settings """
                                  """selected and retry""")
 
         self.close()
+
+    def get_depth_cal(self, path):
+        calFile = open(path, 'r')
+        calFile.readline()
+        value = float(calFile.readline())
+        calFile.close()
+        return value
+
+    def get_tension_cal(self, path):
+        calFile = open(path, 'r')
+        calFile.readline()
+        coefs = calFile.readline().split(',')
+        coefs = [float(c) for c in coefs]
+        return coefs
 
     def dialog_critical(self, s):
         dlg = QMessageBox(self)

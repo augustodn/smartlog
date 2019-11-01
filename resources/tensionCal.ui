@@ -16,14 +16,14 @@
   <widget class="QDialogButtonBox" name="buttonBox">
    <property name="geometry">
     <rect>
-     <x>260</x>
+     <x>350</x>
      <y>300</y>
-     <width>171</width>
+     <width>81</width>
      <height>24</height>
     </rect>
    </property>
    <property name="standardButtons">
-    <set>QDialogButtonBox::Close|QDialogButtonBox::Ok</set>
+    <set>QDialogButtonBox::Close</set>
    </property>
   </widget>
   <widget class="QGroupBox" name="groupBox">
@@ -121,7 +121,7 @@
   <widget class="QPushButton" name="calibrate">
    <property name="geometry">
     <rect>
-     <x>180</x>
+     <x>260</x>
      <y>300</y>
      <width>80</width>
      <height>24</height>

@@ -29,8 +29,7 @@ class TensionCal(QDialog, Ui_TensionCal):
         self.comboBox.insertItems(len(fileList), fileList)
 
         # TODO: Fix save_cal call
-        self.buttonBox.accepted.connect(self.save_cal)
-        self.buttonBox.rejected.connect(self.save_cal)
+        self.buttonBox.rejected.connect(self.close_process)
         self.calibrate.clicked.connect(self.make_cal)
         self.comboBox.activated.connect(self.read_cal_file)
 
@@ -104,8 +103,11 @@ class TensionCal(QDialog, Ui_TensionCal):
         print("[INFO] New cal file {} generated".format(fname))
 
 
-    def save_cal(self):
-        self.serTimer.stop()
+    def close_process(self):
+        if self.serial.opened:
+            self.serTimer.stop()
+            self.serial.close()
+
         self.close()
 
     def open_con(self):
@@ -149,10 +151,10 @@ class TensionCal(QDialog, Ui_TensionCal):
                 self.avgTension[2] = avg
                 self.le_ToolStrRead.setText(str(round(avg, 2)))
             else:
-                # Serial connection is not closed mainly because this resets
-                # depth display
+                self.serial.close()
                 self.serTimer.stop()
                 self.check_cal()
+
         return 0
 
     def calc_average(self, data, col):

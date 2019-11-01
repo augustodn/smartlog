@@ -22,8 +22,7 @@ class DepthCal(QDialog, Ui_DepthCal):
         self.isCalibrating = False
 
         # Connections
-        self.buttonBox.accepted.connect(self.close)
-        self.buttonBox.rejected.connect(self.close)
+        self.buttonBox.rejected.connect(self.close_process)
         self.calibrate.clicked.connect(self.make_cal)
 
 
@@ -42,7 +41,8 @@ class DepthCal(QDialog, Ui_DepthCal):
             self.check_cal(rawCounts)
 
     def check_cal(self, rawCounts):
-        calFactor = rawCounts/1000
+        # Calibration is based in the amount of raw counts per 5m
+        calFactor = rawCounts/5
         dlg = QMessageBox(self)
         dlg.setText("""Calibration factor has been determined """
                     """Do you want to create a new calibration file?""")
@@ -86,7 +86,7 @@ class DepthCal(QDialog, Ui_DepthCal):
 
         self.serTimer = QTimer(self)
         self.serTimer.timeout.connect(self.read_data)
-        self.serTimer.start(1000)
+        self.serTimer.start(300)
 
     def read_data(self):
         data, self.serSeq = self.serial.get_data(self.serSeq)
@@ -97,11 +97,18 @@ class DepthCal(QDialog, Ui_DepthCal):
             rawCounts = data.transpose()[col][-1]
             if self.refreshValues:
                 self.le_RawCounts.setText(str(rawCounts))
-                self.le_EstDepth.setText(str(rawCounts/100))
+                self.le_EstDepth.setText(str(rawCounts/401))
             else:
-                # Serial connection is not closed mainly because this resets
-                # depth display
                 self.serTimer.stop()
+                self.serial.close()
+                self.serial.opened = False
+
+    def close_process(self):
+        if self.serial.opened:
+            self.serTimer.stop()
+            self.serial.close()
+
+        self.close()
 
     def dialog_critical(self, s):
         dlg = QMessageBox(self)
