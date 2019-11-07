@@ -34,6 +34,8 @@ class SaveAs(QWidget, Ui_ProgressBar):
         self.buttonBox.rejected.connect(self.cancel)
         self.DEPTH_SCALE = DEPTH_SCALE
         self.TENSION_SCALE = []
+        self.axis_xmin = [-10, 0]
+        self.axis_xmax = [10, 20000]
 
     def pdf(self):
         # self.make_frontPage()
@@ -53,6 +55,8 @@ class SaveAs(QWidget, Ui_ProgressBar):
             self.thread = PDFThread(self.session, totPages)
             self.thread.DEPTH_SCALE = self.DEPTH_SCALE
             self.thread.TENSION_SCALE = self.TENSION_SCALE
+            self.thread.axis_xmax = self.axis_xmax
+            self.thread.axis_xmin = self.axis_xmin
             self.thread.change_value.connect(self.update_progress)
             self.thread.finished.connect(self.make_frontPage)
             self.thread.start()
@@ -130,6 +134,8 @@ class PDFThread(QThread):
         self.totPages = totPages
         self.TENSION_SCALE = TENSION_SCALE
         self.DEPTH_SCALE = DEPTH_SCALE
+        self.axis_xmin = [-10, 0]
+        self.axis_xmax = [10, 20000]
 
     def run(self):
         pdfFile = 'plot.pdf'
@@ -139,17 +145,15 @@ class PDFThread(QThread):
                              1, 2, # 1 row, 2 cols
                              gridspec_kw={'width_ratios':[1, 2]},
                              sharey=True,
-                             figsize=(8.27, 11.69)
-                             )
-
+                             figsize=(8.27, 11.69))
             con = sqlite3.connect(self.session.active['DBpath'])
             while (page < (self.totPages + 1)):
                 self.change_value.emit(page)
                 cur = con.cursor()
                 result = cur.execute(
                     """SELECT * FROM {} where id_seq > {} and id_seq < {}"""
-                    .format(self.session.active['pass'], page*100,
-                            (page+1)*100)).fetchall()
+                    .format(self.session.active['pass'], page*100, (page+1)*100))\
+                    .fetchall()
 
                 y = []
                 x1 = []
@@ -166,8 +170,6 @@ class PDFThread(QThread):
                 axis[1].plot(x2, y, label="Tension", linewidth=1.0)
                 # plt.title('Tension Plot')
 
-                axis_xmin = [-10, 0]
-                axis_xmax = [10, 20000]
                 fig.legend(ncol=2, loc='upper center',
                                 mode="expand",
                                 borderaxespad=0.)
@@ -177,12 +179,11 @@ class PDFThread(QThread):
                 axis_major_step = []
                 axis_minor_step = []
 
-                for i, _ in enumerate(axis_xmin):
-                    axis_major_step.append(int((axis_xmax[i] - axis_xmin[i]) \
-                                               / (2 * (1 + i)))
-                                          )
+                for i, _ in enumerate(self.axis_xmin):
+                    axis_major_step.append(
+                        int((self.axis_xmax[i] - self.axis_xmin[i])/(2*(1+i))))
                     axis_minor_step.append(axis_major_step[i] / 5)
-                    axis[i].set_xlim(axis_xmin[i],axis_xmax[i])
+                    axis[i].set_xlim(self.axis_xmin[i],self.axis_xmax[i])
 
                 axis[0].tick_params(axis='y', which='major', pad=7)
                 axis[0].yaxis.tick_right()
@@ -207,7 +208,6 @@ class PDFThread(QThread):
                     ax.yaxis.set_major_locator(ticker.MultipleLocator(10))
                     ax.yaxis.set_minor_locator(ticker.MultipleLocator(2))
 
-                # print("Printed page :", page)
                 page += 1
                 pdf.savefig(fig)
                 plt.close()

@@ -28,7 +28,6 @@ class TensionCal(QDialog, Ui_TensionCal):
         self.avgTension = [0, 0, 0, 20000]
         self.comboBox.insertItems(len(fileList), fileList)
 
-        # TODO: Fix save_cal call
         self.buttonBox.rejected.connect(self.close_process)
         self.calibrate.clicked.connect(self.make_cal)
         self.comboBox.activated.connect(self.read_cal_file)

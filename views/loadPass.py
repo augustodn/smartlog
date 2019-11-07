@@ -98,6 +98,7 @@ class LoadPass(QDialog, QObject, Ui_LoadPass):
 
         level = [[],[],[]]
         rows = []
+
         for row in result:
             level[0].append(row[0])
             level[1].append(row[1])
@@ -105,13 +106,10 @@ class LoadPass(QDialog, QObject, Ui_LoadPass):
             rows.append(row)
 
         level[0] = list(set(level[0]))
-        # print(level)
-        # print(rows)
-        # TODO: Clean structure before starting to append
-
         root_item = [QStandardItem(item) for item in level[0]]
         [self.rootNode.appendRow(item) for item in root_item]
 
+        # Clean elements before appending
         level_1 = []
         level_1_item = []
 

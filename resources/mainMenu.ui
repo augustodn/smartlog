@@ -20,7 +20,7 @@
      <x>0</x>
      <y>0</y>
      <width>456</width>
-     <height>25</height>
+     <height>20</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuLog">
@@ -158,11 +158,17 @@
    </property>
   </action>
   <action name="actionRun">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
    <property name="text">
     <string>Run</string>
    </property>
   </action>
   <action name="actionPass">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
    <property name="text">
     <string>Pass</string>
    </property>

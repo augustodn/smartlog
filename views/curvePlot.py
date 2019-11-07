@@ -151,7 +151,7 @@ class MyDynamicMplCanvas(MyMplCanvas):
                         borderaxespad=0.)
 
         # To plot/log down. TODO: Evaluate movement
-        self.fig.gca().invert_yaxis()
+        # self.fig.gca().invert_yaxis()
         axis_major_step = []
         axis_minor_step = []
         for i in range(len(self.axis_xmin)):

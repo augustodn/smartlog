@@ -26,7 +26,7 @@
     <item>
      <widget class="QTabWidget" name="tabWidget">
       <property name="currentIndex">
-       <number>2</number>
+       <number>0</number>
       </property>
       <widget class="QWidget" name="commTab">
        <attribute name="title">
@@ -124,6 +124,9 @@
             <property name="maximum">
              <double>50.000000000000000</double>
             </property>
+            <property name="value">
+             <double>5.000000000000000</double>
+            </property>
            </widget>
           </item>
           <item row="1" column="1">
@@ -155,6 +158,9 @@
             <property name="maximum">
              <double>50.000000000000000</double>
             </property>
+            <property name="value">
+             <double>-5.000000000000000</double>
+            </property>
            </widget>
           </item>
           <item row="1" column="4">
@@ -164,6 +170,9 @@
             </property>
             <property name="maximum">
              <double>22000.000000000000000</double>
+            </property>
+            <property name="value">
+             <double>20000.000000000000000</double>
             </property>
            </widget>
           </item>

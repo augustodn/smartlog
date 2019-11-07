@@ -6,6 +6,7 @@ from . import (digitalDisplay as dsp, curvePlot as cplt,
                tensionCal, depthCal, setDepth)
 import model.main as model
 import lib.arducom as arducom
+import numpy as np
 import time
 
 qt_creator_file = "./resources/mainMenu.ui"
@@ -29,6 +30,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.speedWdgt = dsp.DigitalDisplay(title='Speed', decPnt=True)
         self.depthWdgt = dsp.DigitalDisplay(title='Depth', decPnt=True)
         self.setDepth = setDepth.SetDepth(None)
+        self.cableMovement = None
 
         # Connections
         self.actionWell.triggered.connect(self.new_well)
@@ -37,8 +39,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.actionLoad.triggered.connect(self.load_pass)
         self.actionSaveAs.triggered.connect(self.save_as)
 
-        self.actionStart.triggered.connect(self.start_dataAcq)
-        self.actionStop.triggered.connect(self.stop_dataPolling)
+        self.actionStart.triggered.connect(self.start_data_acq)
+        self.actionStop.triggered.connect(self.stop_data_acq)
         self.actionTension.triggered.connect(self.cal_tension)
         self.actionDepthCal.triggered.connect(self.cal_depth)
         self.actionDepthCorrect.triggered.connect(self.set_depth)
@@ -47,7 +49,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.actionPlot.triggered.connect(self.curve_plot)
         self.actionDepth.triggered.connect(self.depth_window)
         self.actionSpeed.triggered.connect(self.speed_window)
-        self.actionExit.triggered.connect(qApp.quit)
+        #self.actionExit.triggered.connect(qApp.quit)
+        self.actionExit.triggered.connect(self.close)
 
         # Signals
         self.loadPass.sessionChanged.connect(self.update_session)
@@ -65,10 +68,14 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
     def depth_window(self):
         self.depthWdgt.show()
+
     def speed_window(self):
         self.speedWdgt.show()
 
     def curve_plot(self):
+        """
+        Plot selected pass in the respective window
+        """
         if self.session.active['mode'] == 'database':
             self.curvePlot.set_scroll_interval()
         self.curvePlot.update_depth()
@@ -85,6 +92,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
     def new_run(self):
         run = self.session.active['run']
+        #TODO: Fix this. It should look for last run and add one
         self.session.active['run'] = run + 1
         self.session.active['mode'] = 'realtime'
         error = model.WellRunTable().write(self.session)
@@ -102,30 +110,34 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             self.dialog_critical(error)
 
     def update_session(self, session):
-        """ Read session object as argument coming from emit signal.
-        Update session on Main Window """
-
+        """
+        Read session object as argument coming from emit signal.
+        Update session on Main Window.
+        """
         self.session = session
+        print(self.session.active)
         self.curvePlot.session = session
         self.saveAs.session = session
-        print(self.session.active)
-        self.actionPlot.setEnabled(True)
-        self.actionSpeed.setEnabled(True)
-        self.actionDepth.setEnabled(True)
-        self.actionSaveAs.setEnabled(True)
-        self.menuConnect.setEnabled(True)
+        self.actionRun.setEnabled(True)
+        self.actionPass.setEnabled(True)
+        try:
+            if self.port and self.brate:
+                self.menuConnect.setEnabled(True)
+                self.actionStop.setEnabled(False)
+            if self.depthCal and self.tensionCal:
+                self.actionPlot.setEnabled(True)
+                self.actionSpeed.setEnabled(True)
+                self.actionDepth.setEnabled(True)
+        except:
+            pass
+        # Status Bar message
         msg = "Well: {} Run: {} Pass: {}".format(
             session.active['well'],
             str(session.active['run']),
             session.active['pass'][5:])
         self.dbStatus.showMessage(msg)
 
-    def start_dataAcq(self):
-        if not self.serial.opened:
-            self.open_serialCon()
-        self.start_dataPolling()
-
-    def open_serialCon(self):
+    def open_serial_con(self):
         """ Open microcontroller connection using the API """
         msg = ("""Failed to open serial port, check if """
                """winch panel is connected and retry""")
@@ -136,36 +148,49 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                     raise Exception
 
                 self.serial.opened = True
+                # While acquiring it's not possible to calibrate
+                self.menuCalibrate.setEnabled(False)
         except:
             self.dialog_critical(msg)
             return -1
 
-    def start_dataPolling(self):
-        # serial.start() resets id_seq counter
+    def start_data_acq(self):
+        if not self.serial.opened:
+            self.open_serial_con()
+        # First, reset id_seq counter. Hence, it's not recommended
+        # to use the same pass for several depths.
+        # self.serial.start()
         if not self.serial.start():
             self.dialog_critical("""Communication not established, check if """
                                  """winch panel is connected and retry""")
             return -1
 
         self.serSeq = 0
+        self.serial.id_seq_old = -1
         self.lastItem = 0
         self.session.active['mode'] = 'realtime'
         self.update_session(self.session)
         self.curvePlot.update_depth()
 
         self.ardu2DB.open_db(self.session.active['DBpath'])
-        # TODO: Probably better to put this in a thread
         self.serTimer = QTimer(self)
         self.serTimer.timeout.connect(self.read_data)
         self.serTimer.start(500)
+        self.menuCorrect.setEnabled(False)
+        self.actionStart.setEnabled(False)
+        self.actionStop.setEnabled(True)
         return 0
 
-    def stop_dataPolling(self):
-        """ Stop polling from microncontroller """
-        self.serSeq = 0
+    def stop_data_acq(self):
+        #self.serSeq = 0
+        #self.lastItem = 0
         self.session.active['mode'] = 'database'
         self.update_session(self.session)
         self.curvePlot.update_depth()
+        self.cableMovement = None
+        self.menuCorrect.setEnabled(True)
+        self.actionStart.setEnabled(True)
+        self.actionStop.setEnabled(False)
 
         try:
             self.serTimer.stop()
@@ -178,16 +203,31 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         # start = time.clock()
         data, self.serSeq = self.serial.get_data(self.serSeq) # ~ 0.5ms
         table = self.session.active['pass']
-        get_data_t = time.clock()
+        # get_data_t = time.clock()
         if data and self.session.active['mode'] == 'realtime':
             # ~ 68.5 ms mostly plotting data
             self.lastItem += len(data)
+            if not self.cableMovement:
+                self.cableMovement = self.check_movement(data)
+                #if self.cableMovement == 'down':
+                self.curvePlot.canvas.fig.gca().invert_yaxis()
+                print("[INFO] Cable is moving {}".format(self.cableMovement))
             self.curvePlot.set_scroll_interval(self.lastItem)
-            update_plot_t = time.clock()
+            # update_plot_t = time.clock()
             while(not self.ardu2DB.write(data, table)): # ~ 1ms
                 # retry insertion to DB
                 time.sleep(.1)
                 print("[INFO] Failed to write, retrying")
+
+    def check_movement(self, data):
+        data = np.array(data)
+        depth = data.transpose()[1] # array containing depth values
+        if (depth[0] < depth[-1]) and (abs(depth[-1] - depth[0]) > 2):
+            return 'down'
+        elif (depth[0] > depth[-1]) and (abs(depth[-1] - depth[0]) > 2):
+            return 'up'
+        else:
+            return None
 
     def new_settings(self):
         self.settings.refresh_comboBoxes()
@@ -198,14 +238,27 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.brate = preferences['brate']
         self.curvePlot.canvas.axis_xmin = preferences['axis_xmin']
         self.curvePlot.canvas.axis_xmax = preferences['axis_xmax']
+        self.saveAs.axis_xmin = preferences['axis_xmin']
+        self.saveAs.axis_xmax = preferences['axis_xmax']
         self.depthCal = preferences['depth_cal']
         self.tensionCal = preferences['tension_cal']
         self.curvePlot.canvas.DEPTH_SCALE = self.depthCal
         self.curvePlot.canvas.TENSION_SCALE = self.tensionCal
         self.saveAs.DEPTH_SCALE = self.depthCal
         self.saveAs.TENSION_SCALE = self.tensionCal
-        self.menuCorrect.setEnabled(True)
-        self.menuCalibrate.setEnabled(True)
+        self.setDepth.depthCal = self.depthCal
+        if self.port and self.brate:
+            self.menuCorrect.setEnabled(True)
+            self.menuCalibrate.setEnabled(True)
+        if self.session.active['well']\
+        and self.session.active['pass']:
+            self.actionPlot.setEnabled(True)
+            self.actionSpeed.setEnabled(True)
+            self.actionDepth.setEnabled(True)
+            self.actionSaveAs.setEnabled(True)
+            if self.port and self.brate:
+                self.menuConnect.setEnabled(True)
+                self.actionStop.setEnabled(False)
 
     def update_displays(self, value):
         self.depthWdgt.lcdNumber.display(str(value[0]))
@@ -225,9 +278,9 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
     def send_depth_panel(self, depth):
         if not self.serial.opened:
-            self.open_serialCon()
+            self.open_serial_con()
             time.sleep(2)
-
+        print(depth)
         answer = self.serial.set_depth(depth['val'], depth['cal'])
         if answer < 0:
             self.dialog_critical("New depth value not verified")

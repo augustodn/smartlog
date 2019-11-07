@@ -19,7 +19,8 @@ class Settings(QDialog, Ui_Settings):
         # View data filling
         self.tabWidget.setCurrentIndex(0)
         self.refresh_comboBoxes()
-
+        bRateList = ['500000']
+        self.bRateComboBox.insertItems(len(bRateList), bRateList)
         # Connections
         self.sendDepthCal.clicked.connect(self.send_depthCal)
         self.buttonBox.accepted.connect(self.save_prefs)
@@ -27,13 +28,9 @@ class Settings(QDialog, Ui_Settings):
 
     def refresh_comboBoxes(self):
         # Clear the lists first, before refreshing
-        self.bRateComboBox.clear()
         self.portComboBox.clear()
         self.tensionComboBox.clear()
         self.depthComboBox.clear()
-
-        bRateList = ['9600', '115200', '500000']
-        self.bRateComboBox.insertItems(len(bRateList), bRateList)
 
         portList = [port.device + " " + port.description
                     for port in serial.comports()]
@@ -59,9 +56,11 @@ class Settings(QDialog, Ui_Settings):
                    self.portComboBox.currentIndex()]
             brate = int(self.bRateComboBox.currentText())
         except:
-            self.dialog_critical("""Please select the correspondent """
-                                 """ port and bitrate """)
-            return -1
+            # self.dialog_critical("""Please select the correspondent """
+            #                     """ port and bitrate """)
+            port = ''
+            brate = ''
+            # return -1
         serial = arducom.Serial()
         # TODO: Check if port is already opened
         serial.open(port, brate, 1)
@@ -80,6 +79,9 @@ class Settings(QDialog, Ui_Settings):
         try:
             preferences['port'] = self.portDevices[\
                                     self.portComboBox.currentIndex()]
+        except:
+            preferences['port'] = ''
+        try:
             preferences['brate'] = int(self.bRateComboBox.\
                                        currentText())
             preferences['axis_xmin'] = [self.minLeftSpinBox.value(),

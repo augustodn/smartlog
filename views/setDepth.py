@@ -11,11 +11,11 @@ Ui_SetDepth, QtBaseClass = uic.loadUiType(qt_creator_file)
 class SetDepth(QDialog, Ui_SetDepth):
     sendDepth2panel = pyqtSignal(dict)
 
-    def __init__(self, calPath, parent=None):
+    def __init__(self, depthCal, parent=None):
         super(SetDepth, self).__init__(parent)
         Ui_SetDepth.__init__(self)
         self.setupUi(self)
-        self.calPath = calPath
+        self.depthCal = depthCal
 
         # Connections
         self.buttonBox.accepted.connect(self.send_cal)
@@ -23,14 +23,7 @@ class SetDepth(QDialog, Ui_SetDepth):
 
     def send_cal(self):
         depth = self.depthSBox.value()
-        calFile = open(self.calPath, 'r')
-        calFile.readline()
-        depthCal = float(calFile.readline())
-        calFile.close()
-        self.sendDepth2panel.emit({'val': depth, 'cal': depthCal})
-        # TODO: Emit a signal to mainMenu, use its serial object to
-        # command set_depth method. Maybe its a good idea to use the
-        # same in settings to download cal depth factor
+        self.sendDepth2panel.emit({'val': depth, 'cal': self.depthCal})
         self.close()
 
     def dialog_critical(self, s):
