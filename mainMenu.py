@@ -1,16 +1,16 @@
 from PyQt5 import uic
 from PyQt5.QtWidgets import QMainWindow, qApp, QMessageBox, QStatusBar
 from PyQt5.QtCore import QTimer
-from . import (digitalDisplay as dsp, curvePlot as cplt,
-               newWell as nw, loadPass as lp, settings, saveAs,
-               tensionCal, depthCal, setDepth)
-import model.main as model
-import lib.arducom as arducom
+from src.bin import settings, setDepth, curvePlot as cplt, depthCal, digitalDisplay as dsp, saveAs, tensionCal, \
+    newWell as nw, loadPass as lp
+import src.model.main as model
+from src.lib import arducom as arducom
 import numpy as np
 import time
 
 qt_creator_file = "./resources/mainMenu.ui"
 Ui_MainWindow, QtBaseClass = uic.loadUiType(qt_creator_file)
+
 
 class MainWindow(QMainWindow, Ui_MainWindow):
     def __init__(self):
@@ -215,7 +215,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                 print("[INFO] Cable is moving {}".format(self.cableMovement))
             self.curvePlot.set_scroll_interval(self.lastItem)
             # update_plot_t = time.clock()
-            while(not self.ardu2DB.write(data, table)): # ~ 1ms
+            while not self.ardu2DB.write(data, table): # ~ 1ms
                 # retry insertion to DB
                 time.sleep(.1)
                 print("[INFO] Failed to write, retrying")
