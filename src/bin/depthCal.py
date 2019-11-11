@@ -1,13 +1,13 @@
 from PyQt5 import uic
 from PyQt5.QtWidgets import QDialog, QMessageBox
 from PyQt5.QtCore import QTimer
-import lib.arducom as arducom
+import src.lib.arducom as arducom
 import numpy as np
 import glob, os
 from datetime import datetime
 import time
 
-qt_creator_file = "./resources/depthCal.ui"
+qt_creator_file = "./src/resources/depthCal.ui"
 Ui_DepthCal, QtBaseClass = uic.loadUiType(qt_creator_file)
 
 class DepthCal(QDialog, Ui_DepthCal):

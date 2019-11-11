@@ -3,9 +3,9 @@ from PyQt5.QtWidgets import QDialog, QMessageBox
 from PyQt5.QtCore import pyqtSignal
 import glob, os
 import serial.tools.list_ports as serial
-import lib.arducom as arducom
+import src.lib.arducom as arducom
 
-qt_creator_file = "./resources/setDepth.ui"
+qt_creator_file = "./src/resources/setDepth.ui"
 Ui_SetDepth, QtBaseClass = uic.loadUiType(qt_creator_file)
 
 class SetDepth(QDialog, Ui_SetDepth):

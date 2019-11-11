@@ -8,7 +8,7 @@ from src.lib import arducom as arducom
 import numpy as np
 import time
 
-qt_creator_file = "./resources/mainMenu.ui"
+qt_creator_file = "./src/resources/mainMenu.ui"
 Ui_MainWindow, QtBaseClass = uic.loadUiType(qt_creator_file)
 
 

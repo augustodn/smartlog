@@ -3,11 +3,12 @@ from PyQt5.QtWidgets import QDialog, QMessageBox
 from PyQt5.QtCore import pyqtSignal
 import glob, os
 import serial.tools.list_ports as serial
-import lib.arducom as arducom
+import src.lib.arducom as arducom
 
 
-qt_creator_file = "./resources/settings.ui"
+qt_creator_file = "./src/resources/settings.ui"
 Ui_Settings, QtBaseClass = uic.loadUiType(qt_creator_file)
+
 
 class Settings(QDialog, Ui_Settings):
     prefsChanged = pyqtSignal(dict)
@@ -37,8 +38,8 @@ class Settings(QDialog, Ui_Settings):
         self.portDevices = [port.device for port in serial.comports()]
         self.portComboBox.insertItems(len(portList), portList)
 
-        tensionCalList = glob.glob('./cals/tension*.cal')
-        depthCalList = glob.glob('./cals/depth*.cal')
+        tensionCalList = glob.glob('./src/cals/tension*.cal')
+        depthCalList = glob.glob('./src/cals/depth*.cal')
         self.tensionComboBox.insertItems(len(tensionCalList), tensionCalList)
         self.depthComboBox.insertItems(len(depthCalList), depthCalList)
 

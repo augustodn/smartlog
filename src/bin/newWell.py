@@ -2,11 +2,12 @@ from PyQt5 import uic
 from PyQt5.QtWidgets import QSizePolicy, QDialog, QMessageBox
 from PyQt5.QtCore import pyqtSignal, QDate
 from datetime import datetime
-import model.main as model
+import src.model.main as model
 
-DB_PATH = './data/'
+DB_PATH = './src/data/'
 
-Ui_NewWell, QtBaseClass = uic.loadUiType("./resources/newWell.ui")
+Ui_NewWell, QtBaseClass = uic.loadUiType("./src/resources/newWell.ui")
+
 
 class NewWell(QDialog, Ui_NewWell):
     sessionChanged = pyqtSignal(model.Session)

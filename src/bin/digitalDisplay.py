@@ -1,7 +1,7 @@
 from PyQt5 import uic
 from PyQt5.QtWidgets import QLCDNumber, QVBoxLayout, QDialog
 
-Ui_DigitalDisplay, QtBaseClass = uic.loadUiType("./resources/digitalDisplay.ui")
+Ui_DigitalDisplay, QtBaseClass = uic.loadUiType("./src/resources/digitalDisplay.ui")
 
 class DigitalDisplay(QDialog, Ui_DigitalDisplay):
     def __init__(self, parent=None, title='', decPnt=False):

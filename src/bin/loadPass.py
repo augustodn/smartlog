@@ -4,10 +4,11 @@ from PyQt5.QtWidgets import QDialog, QApplication, QFileDialog, QMessageBox
 from PyQt5.QtCore import (QItemSelection, pyqtSlot, Qt, pyqtSignal, QObject,
                          QModelIndex)
 import sqlite3
-import model.main as model
+import src.model.main as model
 
-qt_creator_file = "./resources/loadPass.ui"
+qt_creator_file = "./src/resources/loadPass.ui"
 Ui_LoadPass, QtBaseClass = uic.loadUiType(qt_creator_file)
+
 
 class LoadPass(QDialog, QObject, Ui_LoadPass):
     sessionChanged = pyqtSignal(model.Session)

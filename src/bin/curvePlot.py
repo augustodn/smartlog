@@ -8,14 +8,14 @@ from matplotlib.figure import Figure
 import matplotlib.ticker as ticker
 import numpy as np
 import sqlite3
-import model.main as model
+import src.model.main as model
 import time
 
 DEPTH_SCALE = 98.0
 TENSION_SCALE = 19.53125
 CCL_FACTOR = 55.1
 CCL_OFFSET = 0 # -511
-Ui_CurvePlot, QtBaseClass = uic.loadUiType("./resources/curvePlot.ui")
+Ui_CurvePlot, QtBaseClass = uic.loadUiType("./src/resources/curvePlot.ui")
 
 class CurvePlot(QDialog, Ui_CurvePlot):
 

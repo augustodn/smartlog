@@ -1,13 +1,14 @@
 from PyQt5 import uic
 from PyQt5.QtWidgets import QDialog, QApplication, QMessageBox
 from PyQt5.QtCore import Qt, QTimer
-import lib.arducom as arducom
+import src.lib.arducom as arducom
 import numpy as np
 import glob, os
 from datetime import datetime
 
-qt_creator_file = "./resources/tensionCal.ui"
+qt_creator_file = "./src/resources/tensionCal.ui"
 Ui_TensionCal, QtBaseClass = uic.loadUiType(qt_creator_file)
+
 
 class TensionCal(QDialog, Ui_TensionCal):
     def __init__(self, port, brate, parent=None):

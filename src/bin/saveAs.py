@@ -12,14 +12,15 @@ import jinja2
 import pdfkit
 import os
 from PyPDF2 import PdfFileMerger
-import model.main as model
+import src.model.main as model
 
-Ui_ProgressBar, QtBaseClass = uic.loadUiType("./resources/progressBar.ui")
+Ui_ProgressBar, QtBaseClass = uic.loadUiType("./src/resources/progressBar.ui")
 
 DEPTH_SCALE = 98.0
 TENSION_SCALE = 19.53125
 CCL_FACTOR = 51.1
 CCL_OFFSET = 0   # -511
+
 
 class SaveAs(QWidget, Ui_ProgressBar):
 
