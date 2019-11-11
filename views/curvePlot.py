@@ -35,6 +35,7 @@ class CurvePlot(QDialog, Ui_CurvePlot):
                             mode = self.session.active['mode'])
         layout.addWidget(self.canvas)
         self.mainWidget.setFocus()
+        self.cableUp = False
 
         # Connections
         self.vScrollBar.valueChanged.connect(self.update_depth)
@@ -43,7 +44,12 @@ class CurvePlot(QDialog, Ui_CurvePlot):
         self.canvas.DB_PATH = self.session.active['DBpath']
         self.canvas.TABLE = self.session.active['pass']
         self.canvas.mode = self.session.active['mode']
-        self.canvas.iter = self.vScrollBar.value()
+        # If cable movement is up, whe have to invert the scroll position
+        # id_seq = 0 starts at the bottom and not at the beggining
+        if self.cableUp:
+            self.canvas.iter = self.vScrollBar.maximum() - self.vScrollBar.value()
+        else:
+            self.canvas.iter = self.vScrollBar.value()
         self.canvas.update_figure()
 
     def wheelEvent(self, event):
@@ -52,6 +58,25 @@ class CurvePlot(QDialog, Ui_CurvePlot):
         if newvScrollBarVal < 0:
             newvScrollBarVal = 0
         self.vScrollBar.setValue(newvScrollBarVal)
+
+    def check_movement(self, totPages):
+        for i in list(range(totPages)):
+            con = sqlite3.connect(self.session.active['DBpath'])
+            data = con.execute(
+                        """SELECT * FROM {} where id_seq > {} and """
+                        """id_seq < {}""".format(
+                            self.session.active['pass'],
+                            i*100,
+                            (i+1)*100)).fetchall()
+            data = np.array(data)
+            depth = data.transpose()[1] # array containing depth values
+            if (depth[0] < depth[-1]) and (abs(depth[-1] - depth[0]) > 2):
+                # Cable Down
+                return False
+            if (depth[0] > depth[-1]) and (abs(depth[-1] - depth[0]) > 2):
+                # Cable Up
+                return True
+
 
     def set_scroll_interval(self, lastItem=None):
         pageStep = 1
@@ -62,14 +87,22 @@ class CurvePlot(QDialog, Ui_CurvePlot):
             lastItem = con.execute("SELECT COUNT(*) FROM {}"\
                        .format(self.session.active['pass'])).fetchall()[0][0]
             con.close()
+            self.cableUp = self.check_movement(int(lastItem/100))
+
         lastItem = lastItem - pageStep
         self.vScrollBar.setMinimum(0)
         # Division by 100 depends on the DB query interval. Related to zoom
         self.vScrollBar.setMaximum(int(lastItem/100))
         self.vScrollBar.setPageStep(pageStep)
-        if self.session.active['mode'] == 'realtime' and wasAtMax:
-            # TODO: This is only in case we're logging down
-            self.vScrollBar.setValue(int(lastItem/100) - 2*pageStep)
+        if self.session.active['mode'] == 'realtime':
+            # While logging down the slider is set to the bottom 
+            if wasAtMax and not self.cableUp:
+                self.vScrollBar.setValue(int(lastItem/100) - 2*pageStep)
+            # While logging up, slider always on top (probably redundant)
+            elif self.vScrollBar.value() < 2 and self.cableUp:
+                # Trigger a plot refresh
+                self.update_depth()
+                # self.vScrollBar.setValue(1)
 
 
 class MyMplCanvas(FigureCanvas):
@@ -105,6 +138,8 @@ class MyDynamicMplCanvas(MyMplCanvas):
         self.iter = 0
         self.axis_xmin = [-10, 0]
         self.axis_xmax = [10, 20000]
+        self.top = 0
+        self.bottom =  0
 
 
     def update_figure(self):
@@ -126,7 +161,7 @@ class MyDynamicMplCanvas(MyMplCanvas):
         x1 = []
         x2 = []
         if (len(self.TENSION_SCALE) != 1024):
-            print("Tension scale array has not the proper lenght")
+            print("[ERROR] Tension scale array has not the proper lenght")
             return -1
 
         for var in self.result:
@@ -136,12 +171,28 @@ class MyDynamicMplCanvas(MyMplCanvas):
 
         # Calculate speed
         self.set_depthnSpeed(y[-10:])
+        y_arr = np.array(y)
+        # print(y_arr.max(), y_arr.min())
+        if y_arr.any() and self.bottom < y_arr.max():
+            self.top = int(y_arr.min())
+            self.bottom = int(y_arr.min()) + 50
+            [ax.clear() for ax in self.axis] # takes ~ 47.0 ms!!
+            self.load_subp_style()
+
+        elif y_arr.any() and self.top > y_arr.min():
+            self.top = int(y_arr.max()) - 50
+            self.bottom = int(y_arr.max())
+            [ax.clear() for ax in self.axis] # takes ~ 47.0 ms!!
+            self.load_subp_style()
+
         # Plot data ~ 48.0 ms TODO: Maybe multithread this
-        [ax.clear() for ax in self.axis] # takes ~ 47.0 ms!!
-        self.axis[0].plot(x1, y, label="CCL", linewidth=1.0)
-        self.axis[1].plot(x2, y, label="Tension", linewidth=1.0)
+        #[ax.clear() for ax in self.axis] # takes ~ 47.0 ms!!
+        self.axis[0].set_ylim(self.top, self.bottom)
+        self.axis[0].plot(x1, y, color='b', label="CCL", linewidth=1.0)
+        self.axis[1].plot(x2, y, color='b', label="Tension", linewidth=1.0)
+        self.fig.gca().invert_yaxis()
         # This two below takes ~ 15.0 ms
-        self.load_subp_style()
+        # self.load_subp_style()
         self.draw_idle() #  increase performance x10 vs draw() method
 
 
@@ -150,7 +201,6 @@ class MyDynamicMplCanvas(MyMplCanvas):
                         mode="expand",
                         borderaxespad=0.)
 
-        # To plot/log down. TODO: Evaluate movement
         # self.fig.gca().invert_yaxis()
         axis_major_step = []
         axis_minor_step = []

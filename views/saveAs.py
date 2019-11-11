@@ -1,19 +1,18 @@
+from PyQt5.QtWidgets import QFileDialog, QWidget
+from PyQt5 import uic
+from PyQt5.QtCore import pyqtSignal, QThread
 import sqlite3
-import datetime
-from PyQt5.QtWidgets import QDialog, QFileDialog, QWidget, qApp
-import numpy as np
 import matplotlib
 matplotlib.use('Agg')
 from matplotlib.backends.backend_pdf import PdfPages
 import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
-import model.main as model
-from PyQt5 import uic
-from PyQt5.QtCore import pyqtSignal, QThread
+import numpy as np
 import jinja2
 import pdfkit
 import os
 from PyPDF2 import PdfFileMerger
+import model.main as model
 
 Ui_ProgressBar, QtBaseClass = uic.loadUiType("./resources/progressBar.ui")
 
@@ -147,12 +146,34 @@ class PDFThread(QThread):
                              sharey=True,
                              figsize=(8.27, 11.69))
             con = sqlite3.connect(self.session.active['DBpath'])
+            cur = con.cursor()
+            #Determine loggig direction
+            for i in list(range(self.totPages+1)):
+                data = cur.execute(
+                            """SELECT * FROM {} where id_seq > {} and """
+                            """id_seq < {}""".format(
+                                self.session.active['pass'],
+                                i*100,
+                                (i+1)*100)).fetchall()
+                data = np.array(data)
+                depth = data.transpose()[1] # array containing depth values
+                if (depth[0] < depth[-1]) and (abs(depth[-1] - depth[0]) > 2):
+                    loggedUp = False
+                    break
+                if (depth[0] > depth[-1]) and (abs(depth[-1] - depth[0]) > 2):
+                    loggedUp = True
+                    break
+
             while (page < (self.totPages + 1)):
+                if not loggedUp:
+                    count = page
+                else:
+                    # Reverse plotting order
+                    count = self.totPages + 1 - page
                 self.change_value.emit(page)
-                cur = con.cursor()
                 result = cur.execute(
                     """SELECT * FROM {} where id_seq > {} and id_seq < {}"""
-                    .format(self.session.active['pass'], page*100, (page+1)*100))\
+                    .format(self.session.active['pass'], count*100, (count+1)*100))\
                     .fetchall()
 
                 y = []

@@ -49,8 +49,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.actionPlot.triggered.connect(self.curve_plot)
         self.actionDepth.triggered.connect(self.depth_window)
         self.actionSpeed.triggered.connect(self.speed_window)
-        #self.actionExit.triggered.connect(qApp.quit)
-        self.actionExit.triggered.connect(self.close)
+        self.actionExit.triggered.connect(qApp.quit)
 
         # Signals
         self.loadPass.sessionChanged.connect(self.update_session)
@@ -128,6 +127,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                 self.actionPlot.setEnabled(True)
                 self.actionSpeed.setEnabled(True)
                 self.actionDepth.setEnabled(True)
+                self.actionSaveAs.setEnabled(True)
         except:
             pass
         # Status Bar message
@@ -209,8 +209,9 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             self.lastItem += len(data)
             if not self.cableMovement:
                 self.cableMovement = self.check_movement(data)
-                #if self.cableMovement == 'down':
-                self.curvePlot.canvas.fig.gca().invert_yaxis()
+                if self.cableMovement == 'up':
+                    # Invert scroll startegy
+                    self.curvePlot.cableUp = True
                 print("[INFO] Cable is moving {}".format(self.cableMovement))
             self.curvePlot.set_scroll_interval(self.lastItem)
             # update_plot_t = time.clock()
