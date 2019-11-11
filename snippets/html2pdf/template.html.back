@@ -1,0 +1,292 @@
+<div>
+    <table id=table-width>
+        <tr>
+            <td colspan=3 id=logo><img id=logo src="logo.jpg" alt="logo"></td>
+	    <td colspan=5 id=title>{{ well['service'] }}</td>
+        </tr>
+    </table>
+    <table id=table-width>
+        <tr>
+	 <td rowspan=10 id=vertical-text>Compa&ntildeia: {{ well['company'] }}</td>
+	 <td rowspan=10 id=vertical-text> Pozo: {{ well['name'] }} </td>
+	 <td rowspan=10 id=vertical-text> Yacimiento: {{ well['field'] }} </td>
+	 <td rowspan=10 id=vertical-text> Provincia: {{ well['province'] }} </td>
+	 <td rowspan=10 id=vertical-text> Pais: {{ well['country'] }} </td>
+	 <td colspan=3 id=mainData>Compa&ntildeia: {{ well['company'] }}</td>
+        </tr>
+        <tr>
+		<td colspan=3 id=mainData> Pozo:{{ well['name'] }}</td>
+        </tr>
+        <tr>
+		<td colspan=3 id=mainData> Yacimiento: {{ well['field'] }}</td>
+        </tr>
+        <tr>
+            <td colspan=3 id=mainData>
+		    <div id=row-width> Provincia: {{ well['province'] }}</div>
+		    <div id=row-width> Pais: {{ well['country'] }}</div>
+            </td>
+        </tr>
+        <tr>
+            <td colspan=2 id=noBorderBottom>Localizacion <br>
+                           </td>
+            <td rowspan=3> Locacion<br> 
+                 NQN
+            </td>
+        </tr>
+	<tr>
+		<td colspan=2 id=localization>Latitud: -37.636528</td>
+	</tr>
+	<tr>
+		<td colspan=2 id=localization>Longitud: -69.457956</td>
+	</tr>
+
+        <tr>
+            <td> Referencia:  NIVEL TERRENO</td>
+	    <td> Elevacion: 660.0m </td>
+            <td rowspan=3> Elevacion: <br>
+                M.R: S/D<br>
+                P.T: S/D<br>
+                N.T: 660.0m
+            </td>
+        </tr>
+        <tr>
+            <td> Reg Medido Desde:  NIVEL TERRENO</td>
+	    <td></td>
+        </tr>
+        <tr>
+            <td> Perf Medido Desde: NIVEL TERRENO</td>
+	    <td></td>
+        </tr>
+    </table>
+    <table id=table-width>
+        <tr>
+            <td> Fecha </td>
+	    <td> {{ well['date'] }} </td>
+            <td> </td>
+        </tr>
+        <tr>
+            <td> Carrera Nro</td>
+            <td> UNA </td>
+            <td> </td>
+        </tr>
+        <tr>
+            <td> Primera Lectura</td>
+            <td> 166.27 </td>
+            <td> </td>
+        </tr>
+        <tr>
+            <td> Ultima Lectura</td>
+            <td> 0.00m </td>
+            <td> </td>
+        </tr>
+        <tr>
+            <td> Profundidad Alcanzada</td>
+            <td> 167.00m </td>
+            <td> </td>
+        </tr>
+        <tr>
+            <td> Tiempo de Operación</td>
+            <td> 2Hs </td>
+            <td> </td>
+        </tr>
+        <tr>
+            <td> Unidad de Perfilaje</td>
+            <td> 228 </td>
+            <td> </td>
+        </tr>
+         <tr>
+            <td> Base</td>
+            <td> NEUQUEN </td>
+            <td> </td>
+        </tr>
+        <tr>
+            <td> Tipo de Fluido</td>
+            <td> AGUA</td>
+            <td> </td>
+        </tr>
+        <tr>
+            <td> Densidad</td>
+            <td> 1 g/cc </td>
+            <td> </td>
+        </tr>
+        <tr>
+            <td> Equipo</td>
+            <td> BLOCK </td>
+            <td> </td>
+        </tr>
+        <tr>
+            <td> Nivel de Fluido</td>
+            <td> 0m </td>
+            <td> </td>
+        </tr>
+         <tr>
+            <td> Temperatura Maxima</td>
+            <td> 23.2 C</td>
+            <td> </td>
+        </tr>
+        <tr>
+            <td> Registrado Por</td>
+	    <td> {{ well['operator'] }}</td>
+            <td> </td>
+        </tr>
+        <tr>
+            <td> Supervisado Por</td>
+            <td> Juan Echavarria </td>
+            <td> </td>
+        </tr>
+    </table>
+    <table id=table-width>
+        <tr>
+            <td colspan=4 id=centered-text> Detalle de Pozo</td>
+            <td colspan=4 id=centered-text> Tuberia</td>
+        </tr>
+        <tr>
+	    <td id=centered-text> Carrera </td>
+            <td id=centered-text> Trepano</td>
+            <td id=centered-text> Desde </td>
+            <td id=centered-text> Hasta</td>
+            <td id=centered-text> Diametro </td>
+            <td id=centered-text> Peso </td>
+            <td id=centered-text> Desde</td>
+            <td id=centered-text> Hasta </td>
+        </tr>
+        <tr id=row-height>
+            <td> </td>
+            <td> </td>
+            <td> </td>
+            <td> </td>
+            <td id=centered-text> 7 </td>
+            <td id=centered-text> 26.0 lbs/ft</td>
+            <td id=centered-text> 0m </td>
+            <td id=centered-text> Fondo </td>
+        </tr>
+        <tr id=row-height>
+            <td> </td>
+            <td> </td>
+            <td> </td>
+            <td> </td>
+            <td> </td>
+            <td> </td>
+            <td> </td>
+            <td> </td>
+        </tr>
+        <tr id=row-height>
+            <td> </td>
+            <td> </td>
+            <td> </td>
+            <td> </td>
+            <td> </td>
+            <td> </td>
+            <td> </td>
+            <td> </td>
+        </tr>
+        <tr id=row-height>
+            <td> </td>
+            <td> </td>
+            <td> </td>
+            <td> </td>
+            <td> </td>
+            <td> </td>
+            <td> </td>
+            <td> </td>
+        </tr>
+    </table>
+    <table id=table-width>
+        <tr>
+            <td> Revestidor </td>
+            <td id=centered-text> Diametro </td>
+            <td id=centered-text> Peso </td>
+            <td id=centered-text> Tope </td>
+            <td id=centered-text> Fondo </td>
+        </tr>
+        <tr>
+            <td> Rev. Super </td>
+            <td> </td>
+            <td> </td>
+            <td> </td>
+            <td> </td>
+        </tr>
+         <tr>
+            <td> Rev. Proteccion </td>
+            <td> </td>
+            <td> </td>
+            <td> </td>
+            <td> </td>
+        </tr>
+         <tr>
+            <td> Sarta de Prod </td>
+            <td> </td>
+            <td> </td>
+            <td> </td>
+            <td> </td>
+        </tr>
+         <tr>
+            <td> Liner </td>
+            <td> </td>
+            <td> </td>
+            <td> </td>
+            <td> </td>
+        </tr>
+</div>
+
+</div>
+
+<style>
+table, th, td {
+  border: 1px solid black;
+  border-collapse: collapse;
+  font-size: 14px;
+  table-layout: fixed;
+}
+th, td {
+  padding: 5px;
+  text-align: left;    
+}
+html {
+  font-family: Arial, Geneva, Helvetica, sans-serif;
+}
+#vertical-text {
+  -webkit-transform: rotate(270deg);
+  width:15px;
+  white-space: nowrap;
+  -webkit-transform-origin: 79px 226px;
+  border-style:none;
+}
+#table-width {
+  width:995px;
+}
+#localization{
+  text-align: center;
+  border-style:none;
+}
+#row-width{
+  width: 400px;
+  display: inline-block;
+}
+#col-border{
+  border-style:none;
+}
+#row-height{
+  height: 22px;
+}
+#mainData{
+  border-top:none;
+  border-bottom:none;
+  font-size: x-large;
+}
+#noBorderBottom{
+  border-bottom:none;
+}
+#logo{
+  height:144px;
+  text-align:center;
+}
+#centered-text{
+  text-align:center;
+}
+#title{
+  text-align: center;
+  font-size: x-large;
+  font-weight: bolder;
+}
+</style>

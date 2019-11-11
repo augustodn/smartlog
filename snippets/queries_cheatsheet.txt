@@ -1,0 +1,1 @@
+select well_run_pass.id_well, well.name from well_run_pass inner join well on well_run_pass.id_well = well.rowid where id_well = 1;
